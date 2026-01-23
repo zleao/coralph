@@ -112,6 +112,7 @@ internal static class ArgParser
         w.WriteLine("  dotnet run --project src/Coralph -- [options]");
         w.WriteLine();
         w.WriteLine("Options:");
+        w.WriteLine("  -h, --help             Show help");
         w.WriteLine("  --max-iterations <n>   Max loop iterations (default: 10)");
         w.WriteLine("  --model <name>         Model (default: gpt-5.1-codex)");
         w.WriteLine("  --prompt-file <path>   Prompt file (default: prompt.md)");

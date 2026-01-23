@@ -24,3 +24,14 @@
 - Key decisions: Use assembly informational/version label for startup banner; record model in progress entries
 - Files changed: src/Coralph/Program.cs
 - Blockers/notes: None
+
+
+---
+# Iteration 1 (2026-01-23T21:59:31.4620000+00:00)
+
+<promise>COMPLETE</promise>
+
+- Task completed: Document --help option (issue #4)
+- Key decisions: Add help flag to usage output
+- Files changed: src/Coralph/ArgParser.cs
+- Blockers/notes: None
