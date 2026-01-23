@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Coralph;
+using Figgle;
 using Microsoft.Extensions.Configuration;
 
 var (overrides, err, initialConfig, configFile, showHelp) = ArgParser.Parse(args);
@@ -40,16 +41,8 @@ if (initialConfig)
 
 var opt = LoadOptions(overrides, configFile);
 
-var banner = string.Join(Environment.NewLine, new[]
-{
-    "  _____                _       _",
-    " / ____|              | |     | |",
-    "| |     ___  _ __  ___| | ___ | |__",
-    "| |    / _ \\\\| '_ \\\\/ __| |/ _ \\\\| '_ \\\\",
-    "| |___| (_) | | | \\__ \\ | (_) | |_) |",
-    " \\_____\\___/|_| |_|___/_|\\___/|_.__/"
-});
-Console.WriteLine(banner);
+var banner = FiggleFonts.Standard.Render("Coralph");
+Console.WriteLine(banner.TrimEnd());
 Console.WriteLine($"Coralph {GetVersionLabel()} | Model: {opt.Model}");
 
 var ct = CancellationToken.None;

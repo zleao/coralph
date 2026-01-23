@@ -84,3 +84,11 @@ Model: GPT-5.1-Codex
 Model: GPT-5.1-Codex
 
 <promise>COMPLETE</promise>
+
+---
+# Iteration 1 (2026-01-23T22:22:12.723Z)
+
+- Task completed: Replace startup ASCII art with Figgle banner (issue #9)
+- Key decisions: Use Figgle Standard font to render "Coralph" and trim trailing newline
+- Files changed: src/Coralph/Coralph.csproj, src/Coralph/Program.cs
+- Blockers/notes: None
