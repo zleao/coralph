@@ -8,7 +8,7 @@ namespace Coralph.Tests;
 public class ToolOutputStylingTests
 {
     [Fact]
-    public void ToolHeader_UsesSpectreRuleWithOrangeStyle()
+    public void ToolHeader_UsesOrangeMarkup()
     {
         var console = new TestConsole();
         AnsiConsole.Console = console;

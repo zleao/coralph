@@ -157,6 +157,13 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Keep README usage aligned with CLI defaults and optional config behavior
 
+## 2026-01-23 - #14
+
+- Left-aligned tool headers with orange text only and removed the full-width rule
+- Files changed: src/Coralph/CopilotRunner.cs, src/Coralph.Tests/ToolOutputStylingTests.cs
+- **Learnings:**
+  - Spectre markup gives better control for compact, aligned tool labels
+
 
 ---
 # Iteration 1 (2026-01-23T22:40:51.3128750+00:00)

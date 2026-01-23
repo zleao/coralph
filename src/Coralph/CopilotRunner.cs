@@ -104,14 +104,7 @@ internal static class CopilotRunner
             return;
         }
 
-        var rule = new Rule(Markup.Escape(text))
-        {
-            Style = Style.Parse("orange1"),
-            Border = BoxBorder.Rounded
-        };
-        AnsiConsole.WriteLine();
-        AnsiConsole.Write(rule);
-        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine($"[orange1]{Markup.Escape(text)}[/]");
     }
 
     private static string SummarizeToolOutput(string toolOutput)
