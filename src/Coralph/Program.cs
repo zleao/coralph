@@ -1,9 +1,11 @@
+using System.Globalization;
 using System.Text;
-
+using System.Text.Json;
 using Coralph;
+using Microsoft.Extensions.Configuration;
 
-var (opt, err) = ArgParser.Parse(args);
-if (opt is null)
+var (overrides, err, initialConfig, configFile) = ArgParser.Parse(args);
+if (overrides is null)
 {
     if (err is not null)
     {
@@ -14,6 +16,27 @@ if (opt is null)
     ArgParser.PrintUsage(err is null ? Console.Out : Console.Error);
     return err is null ? 0 : 2;
 }
+
+if (initialConfig)
+{
+    var path = configFile ?? LoopOptions.ConfigurationFileName;
+    if (File.Exists(path))
+    {
+        Console.Error.WriteLine($"Refusing to overwrite existing config file: {path}");
+        return 1;
+    }
+
+    var defaultPayload = new Dictionary<string, LoopOptions>
+    {
+        [LoopOptions.ConfigurationSectionName] = new LoopOptions()
+    };
+    var json = JsonSerializer.Serialize(defaultPayload, new JsonSerializerOptions { WriteIndented = true });
+    await File.WriteAllTextAsync(path, json, CancellationToken.None);
+    Console.WriteLine($"Wrote default configuration to {path}");
+    return 0;
+}
+
+var opt = LoadOptions(overrides, configFile);
 
 var ct = CancellationToken.None;
 
@@ -62,6 +85,37 @@ for (var i = 1; i <= opt.MaxIterations; i++)
 }
 
 return 0;
+
+static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFile)
+{
+    var path = configFile ?? LoopOptions.ConfigurationFileName;
+    var options = new LoopOptions();
+
+    if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+    {
+        var config = new ConfigurationBuilder()
+            .AddJsonFile(path, optional: false, reloadOnChange: false)
+            .Build();
+
+        config.GetSection(LoopOptions.ConfigurationSectionName).Bind(options);
+    }
+
+    ApplyOverrides(options, overrides);
+    return options;
+}
+
+static void ApplyOverrides(LoopOptions target, LoopOptionsOverrides overrides)
+{
+    if (overrides.MaxIterations is { } max) target.MaxIterations = max;
+    if (!string.IsNullOrWhiteSpace(overrides.Model)) target.Model = overrides.Model;
+    if (!string.IsNullOrWhiteSpace(overrides.PromptFile)) target.PromptFile = overrides.PromptFile;
+    if (!string.IsNullOrWhiteSpace(overrides.ProgressFile)) target.ProgressFile = overrides.ProgressFile;
+    if (!string.IsNullOrWhiteSpace(overrides.IssuesFile)) target.IssuesFile = overrides.IssuesFile;
+    if (overrides.RefreshIssues is { } refresh) target.RefreshIssues = refresh;
+    if (!string.IsNullOrWhiteSpace(overrides.Repo)) target.Repo = overrides.Repo;
+    if (!string.IsNullOrWhiteSpace(overrides.CliPath)) target.CliPath = overrides.CliPath;
+    if (!string.IsNullOrWhiteSpace(overrides.CliUrl)) target.CliUrl = overrides.CliUrl;
+}
 
 static string BuildCombinedPrompt(string promptTemplate, string issuesJson, string progress)
 {

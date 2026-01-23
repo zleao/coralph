@@ -1,0 +1,13 @@
+{
+  "LoopOptions": {
+    "MaxIterations": 10,
+    "Model": "GPT-5.1-Codex",
+    "PromptFile": "prompt.md",
+    "ProgressFile": "progress.txt",
+    "IssuesFile": "issues.json",
+    "RefreshIssues": false,
+    "Repo": null,
+    "CliPath": null,
+    "CliUrl": null
+  }
+}
