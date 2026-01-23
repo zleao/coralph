@@ -22,7 +22,9 @@ internal static class CopilotRunner
         await using (var session = await client.CreateSessionAsync(new SessionConfig
         {
             Model = opt.Model,
-            Streaming = false,
+            Streaming = true,
+            OnPermissionRequest = (request, invocation) =>
+                Task.FromResult(new PermissionRequestResult { Kind = "approved" }),
         }))
         {
             var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -32,11 +34,14 @@ internal static class CopilotRunner
             {
                 switch (evt)
                 {
+                    case AssistantMessageDeltaEvent delta:
+                        // Stream chunks to console in real-time
+                        Console.Write(delta.Data.DeltaContent);
+                        output.Append(delta.Data.DeltaContent);
+                        break;
                     case AssistantMessageEvent msg:
-                        if (!string.IsNullOrEmpty(msg.Data.Content))
-                        {
-                            output.AppendLine(msg.Data.Content);
-                        }
+                        // Final message - newline after streaming completes
+                        Console.WriteLine();
                         break;
                     case SessionErrorEvent err:
                         done.TrySetException(new InvalidOperationException(err.Data.Message));
