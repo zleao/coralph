@@ -35,12 +35,20 @@ internal static class CopilotRunner
                 switch (evt)
                 {
                     case AssistantMessageDeltaEvent delta:
-                        // Stream chunks to console in real-time
                         Console.Write(delta.Data.DeltaContent);
                         output.Append(delta.Data.DeltaContent);
                         break;
-                    case AssistantMessageEvent msg:
-                        // Final message - newline after streaming completes
+                    case AssistantReasoningDeltaEvent reasoning:
+                        // Stream reasoning/thinking content
+                        Console.Write(reasoning.Data.DeltaContent);
+                        output.Append(reasoning.Data.DeltaContent);
+                        break;
+                    case ToolExecutionStartEvent toolStart:
+                        Console.WriteLine($"\n[Tool: {toolStart.Data.ToolName}]");
+                        output.AppendLine($"\n[Tool: {toolStart.Data.ToolName}]");
+                        break;
+                    case AssistantMessageEvent:
+                    case AssistantReasoningEvent:
                         Console.WriteLine();
                         break;
                     case SessionErrorEvent err:
