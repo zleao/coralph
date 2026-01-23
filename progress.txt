@@ -8,3 +8,8 @@
 # Iteration 1 (2026-01-23T21:46:34.4135220+00:00)
 
 <promise>COMPLETE</promise>
+
+- Task completed: Ensure loop waits for all issues before honoring COMPLETE (issue #7)
+- Key decisions: Gate COMPLETE sentinel until at least one pass per issue, capped by max iterations; treat invalid issues JSON as zero
+- Files changed: src/Coralph/Program.cs
+- Blockers/notes: None

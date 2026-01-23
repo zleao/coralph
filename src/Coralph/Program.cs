@@ -54,6 +54,7 @@ var issues = File.Exists(opt.IssuesFile)
 var progress = File.Exists(opt.ProgressFile)
     ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
     : string.Empty;
+var minimumIterations = Math.Min(opt.MaxIterations, Math.Max(1, CountIssues(issues)));
 
 for (var i = 1; i <= opt.MaxIterations; i++)
 {
@@ -77,7 +78,7 @@ for (var i = 1; i <= opt.MaxIterations; i++)
 
     progress += entry;
 
-    if (ContainsComplete(output))
+    if (ContainsComplete(output) && i >= minimumIterations)
     {
         Console.WriteLine("\nCOMPLETE detected, stopping.\n");
         break;
@@ -158,4 +159,20 @@ static bool ContainsComplete(string output)
     // Back-compat with older sentinel
     return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Any(l => string.Equals(l, "COMPLETE", StringComparison.OrdinalIgnoreCase));
+}
+
+static int CountIssues(string issuesJson)
+{
+    if (string.IsNullOrWhiteSpace(issuesJson))
+        return 0;
+
+    try
+    {
+        using var doc = JsonDocument.Parse(issuesJson);
+        return doc.RootElement.ValueKind == JsonValueKind.Array ? doc.RootElement.GetArrayLength() : 0;
+    }
+    catch (JsonException)
+    {
+        return 0;
+    }
 }
