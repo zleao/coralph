@@ -60,3 +60,19 @@
 - Key decisions: Keep banner as simple ASCII lines before version/model line
 - Files changed: src/Coralph/Program.cs
 - Blockers/notes: None
+
+
+---
+# Iteration 1 (2026-01-23T22:15:40.8144570+00:00)
+
+Model: GPT-5.1-Codex
+
+<promise>COMPLETE</promise>
+
+---
+# Iteration 1 (2026-01-23T22:17:37.239Z)
+
+- Task completed: Enhance tool output styling with background header + summary (issue #8)
+- Key decisions: Use dark blue background for tool headers; summarize tool output with preview and size line counts
+- Files changed: src/Coralph/CopilotRunner.cs
+- Blockers/notes: None

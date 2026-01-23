@@ -1,4 +1,5 @@
 using System.Text;
+using System.Linq;
 using GitHub.Copilot.SDK;
 
 namespace Coralph;
@@ -43,18 +44,14 @@ internal static class CopilotRunner
                         Console.Write(reasoning.Data.DeltaContent);
                         break;
                     case ToolExecutionStartEvent toolStart:
-                        Console.WriteLine($"\n[Tool: {toolStart.Data.ToolName}]");
+                        WriteToolHeader($"\n[Tool: {toolStart.Data.ToolName}]");
                         break;
                     case ToolExecutionCompleteEvent toolComplete:
                         // Show tool output in console
                         var toolOutput = toolComplete.Data.Result?.Content;
                         if (!string.IsNullOrWhiteSpace(toolOutput))
                         {
-                            // Truncate very long outputs for readability
-                            const int maxLen = 2000;
-                            var display = toolOutput.Length > maxLen
-                                ? toolOutput[..maxLen] + "\n... (truncated)"
-                                : toolOutput;
+                            var display = SummarizeToolOutput(toolOutput);
                             Console.WriteLine(display);
                         }
                         break;
@@ -83,5 +80,43 @@ internal static class CopilotRunner
 
         await client.StopAsync();
         return result;
+    }
+
+    private static void WriteToolHeader(string text)
+    {
+        var previousForeground = Console.ForegroundColor;
+        var previousBackground = Console.BackgroundColor;
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.BackgroundColor = ConsoleColor.DarkBlue;
+        Console.WriteLine(text);
+        Console.ForegroundColor = previousForeground;
+        Console.BackgroundColor = previousBackground;
+    }
+
+    private static string SummarizeToolOutput(string toolOutput)
+    {
+        var normalized = toolOutput.Replace("\r\n", "\n").TrimEnd();
+        if (string.IsNullOrWhiteSpace(normalized)) return string.Empty;
+
+        var lines = normalized.Split('\n');
+        var totalLines = lines.Length;
+        var totalChars = normalized.Length;
+
+        const int maxLines = 6;
+        const int maxChars = 800;
+        var previewLines = lines.Take(maxLines);
+        var preview = string.Join('\n', previewLines);
+
+        if (preview.Length > maxChars)
+        {
+            preview = preview[..maxChars] + "\n... (truncated)";
+        }
+
+        if (totalLines > maxLines || preview.Length < totalChars)
+        {
+            return $"{preview}\n... ({totalLines} lines, {totalChars} chars)";
+        }
+
+        return preview;
     }
 }
