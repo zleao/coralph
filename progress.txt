@@ -2,3 +2,9 @@
 - Key decisions: Treat missing config as optional by marking JSON file optional when loading
 - Files changed: src/Coralph/Program.cs
 - Blockers/notes: None
+
+
+---
+# Iteration 1 (2026-01-23T21:46:34.4135220+00:00)
+
+<promise>COMPLETE</promise>

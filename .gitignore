@@ -42,7 +42,6 @@ ScaffoldingReadMe.txt
 CodeCoverage/
 
 # Coralph loop artifacts
-progress.txt
 issues.json
 *.tmp
 
