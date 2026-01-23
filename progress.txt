@@ -109,3 +109,19 @@ Model: GPT-5.1-Codex
 Model: GPT-5.1-Codex
 
 <promise>COMPLETE</promise>
+
+
+---
+# Iteration 1 (2026-01-23T22:27:11.7524380+00:00)
+
+Model: GPT-5.1-Codex
+
+<promise>COMPLETE</promise>
+
+---
+# Iteration 1 (2026-01-23T22:28:11.763Z)
+
+- Task completed: Document self-contained publish command for distributable binary (issue #11)
+- Key decisions: Provide dotnet publish example with self-contained single-file and RID hint
+- Files changed: README.md
+- Blockers/notes: None
