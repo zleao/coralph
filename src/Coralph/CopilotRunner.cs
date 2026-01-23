@@ -1,6 +1,7 @@
 using System.Text;
 using System.Linq;
 using GitHub.Copilot.SDK;
+using Spectre.Console;
 
 namespace Coralph;
 
@@ -46,7 +47,7 @@ internal static class CopilotRunner
                         break;
                     case ToolExecutionStartEvent toolStart:
                         lastToolName = toolStart.Data.ToolName;
-                        WriteToolHeader($"\n[Tool: {toolStart.Data.ToolName}]");
+                        WriteToolHeader($"[Tool: {toolStart.Data.ToolName}]");
                         break;
                     case ToolExecutionCompleteEvent toolComplete:
                         // Show tool output in console
@@ -92,15 +93,25 @@ internal static class CopilotRunner
 
     private static void WriteToolHeader(string text)
     {
-        if (Console.IsOutputRedirected)
+        WriteToolHeader(text, Console.IsOutputRedirected);
+    }
+
+    internal static void WriteToolHeader(string text, bool isOutputRedirected)
+    {
+        if (isOutputRedirected)
         {
             Console.WriteLine(text);
             return;
         }
 
-        const string start = "\u001b[44m\u001b[97m";
-        const string reset = "\u001b[0m";
-        Console.WriteLine($"{start}{text}{reset}");
+        var rule = new Rule(Markup.Escape(text))
+        {
+            Style = Style.Parse("orange1"),
+            Border = BoxBorder.Rounded
+        };
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(rule);
+        AnsiConsole.WriteLine();
     }
 
     private static string SummarizeToolOutput(string toolOutput)

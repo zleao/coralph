@@ -125,3 +125,19 @@ Model: GPT-5.1-Codex
 - Key decisions: Provide dotnet publish example with self-contained single-file and RID hint
 - Files changed: README.md
 - Blockers/notes: None
+
+
+---
+# Iteration 1 (2026-01-23T22:30:19.6309050+00:00)
+
+Model: GPT-5.1-Codex
+
+<promise>COMPLETE</promise>
+
+---
+# Iteration 1 (2026-01-23T22:31:16.251Z)
+
+- Task completed: Use Spectre.Console for tool coloring and add unit tests (issue #12)
+- Key decisions: Render tool headers with Spectre.Console Rule in orange; escape markup in headers; add xUnit test with TestConsole via InternalsVisibleTo
+- Files changed: src/Coralph/CopilotRunner.cs, src/Coralph/Coralph.csproj, src/Coralph.Tests/Coralph.Tests.csproj, src/Coralph.Tests/ToolOutputStylingTests.cs
+- Blockers/notes: None

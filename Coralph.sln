@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coralph", "src\Coralph\Coralph.csproj", "{373AC2FA-4043-4646-80E4-015B90707802}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coralph.Tests", "src\Coralph.Tests\Coralph.Tests.csproj", "{F23A90DC-A78D-4069-BD23-67BDAC75B53C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,11 +31,24 @@ Global
 		{373AC2FA-4043-4646-80E4-015B90707802}.Release|x64.Build.0 = Release|Any CPU
 		{373AC2FA-4043-4646-80E4-015B90707802}.Release|x86.ActiveCfg = Release|Any CPU
 		{373AC2FA-4043-4646-80E4-015B90707802}.Release|x86.Build.0 = Release|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Debug|x64.Build.0 = Debug|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Debug|x86.Build.0 = Debug|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Release|x64.ActiveCfg = Release|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Release|x64.Build.0 = Release|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Release|x86.ActiveCfg = Release|Any CPU
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{373AC2FA-4043-4646-80E4-015B90707802} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{F23A90DC-A78D-4069-BD23-67BDAC75B53C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
