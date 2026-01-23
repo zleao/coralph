@@ -217,3 +217,18 @@ Model: GPT-5.1-Codex
 - Files changed: src/Coralph/CopilotRunner.cs
 - **Learnings:**
   - Spectre.Console markup can highlight just the label without centering
+
+
+---
+# Iteration 2 (2026-01-23T22:52:33.6636050+00:00)
+
+Model: GPT-5.1-Codex
+
+<promise>COMPLETE</promise>
+
+## 2026-01-23 - #13
+
+- Verified README updates and ran build/tests
+- Files changed: progress.txt
+- **Learnings:**
+  - Remember to record verification steps in progress logs
