@@ -66,7 +66,10 @@ After completing, append to progress.txt:
 
 # COMMIT
 
-Make a git commit with a clear message.
+Make a git commit with using conventional commits:
+
+- Add key decisions made
+- Notes for next iteration
 
 # THE ISSUE
 
