@@ -35,3 +35,14 @@
 - Key decisions: Add help flag to usage output
 - Files changed: src/Coralph/ArgParser.cs
 - Blockers/notes: None
+
+
+---
+# Iteration 2 (2026-01-23T22:02:17.8057050+00:00)
+
+<promise>COMPLETE</promise>
+
+- Task completed: Refactor command line parsing to System.CommandLine (issue #3)
+- Key decisions: Use System.CommandLine to parse options and emit help output while keeping config file overrides intact
+- Files changed: src/Coralph/Coralph.csproj, src/Coralph/ArgParser.cs, src/Coralph/Program.cs
+- Blockers/notes: None

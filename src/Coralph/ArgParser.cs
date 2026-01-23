@@ -1,130 +1,204 @@
-using System.Globalization;
+using System.CommandLine;
+using System.CommandLine.Help;
 
 namespace Coralph;
 
 internal static class ArgParser
 {
-    internal static (LoopOptionsOverrides? Overrides, string? Error, bool PrintInitialConfig, string? ConfigFile) Parse(string[] args)
+    internal static (LoopOptionsOverrides? Overrides, string? Error, bool PrintInitialConfig, string? ConfigFile, bool ShowHelp) Parse(string[] args)
     {
-        var overrides = new LoopOptionsOverrides();
+        var options = new LoopOptionsOverrides();
         string? configFile = null;
+        var showHelp = false;
         var printInitialConfig = false;
+        var errorMessages = new List<string>();
 
-        for (var i = 0; i < args.Length; i++)
+        var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
+        var helpOption = new Option<bool>(new[] { "-h", "--help" }, "Show help");
+        var maxIterationsOption = new Option<int?>("--max-iterations", "Max loop iterations (default: 10)");
+        var modelOption = new Option<string?>("--model", "Model (default: GPT-5.1-Codex)");
+        var promptFileOption = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
+        var progressFileOption = new Option<string?>("--progress-file", "Progress file (default: progress.txt)");
+        var issuesFileOption = new Option<string?>("--issues-file", "Issues json file (default: issues.json)");
+        var refreshIssuesOption = new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`");
+        var repoOption = new Option<string?>("--repo", "Optional repo override for gh");
+        var cliPathOption = new Option<string?>("--cli-path", "Optional: Copilot CLI executable path");
+        var cliUrlOption = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
+        var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
+        var initialConfigOption = new Option<bool>("--initial-config", "Writes default config json and exits");
+
+        root.AddOption(helpOption);
+        root.AddOption(maxIterationsOption);
+        root.AddOption(modelOption);
+        root.AddOption(promptFileOption);
+        root.AddOption(progressFileOption);
+        root.AddOption(issuesFileOption);
+        root.AddOption(refreshIssuesOption);
+        root.AddOption(repoOption);
+        root.AddOption(cliPathOption);
+        root.AddOption(cliUrlOption);
+        root.AddOption(configOption);
+        root.AddOption(initialConfigOption);
+
+        var result = root.Parse(args);
+        showHelp = result.GetValueForOption(helpOption);
+        printInitialConfig = result.GetValueForOption(initialConfigOption);
+        configFile = result.GetValueForOption(configOption);
+
+        var maxIterations = result.GetValueForOption(maxIterationsOption);
+        if (maxIterations is { } parsedMaxIterations)
         {
-            var a = args[i];
-            switch (a)
+            if (parsedMaxIterations < 1)
             {
-                case "-h":
-                case "--help":
-                    return (null, null, printInitialConfig, configFile);
-
-                case "--max-iterations":
-                    if (!TryGetValue(args, ref i, out var it) ||
-                        !int.TryParse(it, NumberStyles.Integer, CultureInfo.InvariantCulture, out var maxIterations) ||
-                        maxIterations < 1)
-                    {
-                        return (null, "--max-iterations must be an integer >= 1", printInitialConfig, configFile);
-                    }
-                    overrides.MaxIterations = maxIterations;
-                    break;
-
-                case "--model":
-                    if (!TryGetValue(args, ref i, out var model) || string.IsNullOrWhiteSpace(model))
-                        return (null, "--model is required", printInitialConfig, configFile);
-                    overrides.Model = model;
-                    break;
-
-                case "--prompt-file":
-                    if (!TryGetValue(args, ref i, out var promptFile) || string.IsNullOrWhiteSpace(promptFile))
-                        return (null, "--prompt-file is required", printInitialConfig, configFile);
-                    overrides.PromptFile = promptFile;
-                    break;
-
-                case "--progress-file":
-                    if (!TryGetValue(args, ref i, out var progressFile) || string.IsNullOrWhiteSpace(progressFile))
-                        return (null, "--progress-file is required", printInitialConfig, configFile);
-                    overrides.ProgressFile = progressFile;
-                    break;
-
-                case "--issues-file":
-                    if (!TryGetValue(args, ref i, out var issuesFile) || string.IsNullOrWhiteSpace(issuesFile))
-                        return (null, "--issues-file is required", printInitialConfig, configFile);
-                    overrides.IssuesFile = issuesFile;
-                    break;
-
-                case "--refresh-issues":
-                    overrides.RefreshIssues = true;
-                    break;
-
-                case "--repo":
-                    if (!TryGetValue(args, ref i, out var r) || string.IsNullOrWhiteSpace(r))
-                        return (null, "--repo is required", printInitialConfig, configFile);
-                    overrides.Repo = r;
-                    break;
-
-                case "--cli-path":
-                    if (!TryGetValue(args, ref i, out var cp) || string.IsNullOrWhiteSpace(cp))
-                        return (null, "--cli-path is required", printInitialConfig, configFile);
-                    overrides.CliPath = cp;
-                    break;
-
-                case "--cli-url":
-                    if (!TryGetValue(args, ref i, out var cu) || string.IsNullOrWhiteSpace(cu))
-                        return (null, "--cli-url is required", printInitialConfig, configFile);
-                    overrides.CliUrl = cu;
-                    break;
-
-                case "--config":
-                    if (!TryGetValue(args, ref i, out configFile) || string.IsNullOrWhiteSpace(configFile))
-                        return (null, "--config is required", printInitialConfig, configFile);
-                    break;
-
-                case "--initial-config":
-                    printInitialConfig = true;
-                    break;
-
-                default:
-                    return (null, $"Unknown argument: {a}", printInitialConfig, configFile);
+                errorMessages.Add("--max-iterations must be an integer >= 1");
+            }
+            else
+            {
+                options.MaxIterations = parsedMaxIterations;
             }
         }
 
-        return (overrides, null, printInitialConfig, configFile);
-    }
-
-    private static bool TryGetValue(string[] args, ref int i, out string value)
-    {
-        if (i + 1 >= args.Length)
+        var model = result.GetValueForOption(modelOption);
+        if (model is not null)
         {
-            value = string.Empty;
-            return false;
+            if (string.IsNullOrWhiteSpace(model))
+            {
+                errorMessages.Add("--model is required");
+            }
+            else
+            {
+                options.Model = model;
+            }
         }
-        i++;
-        value = args[i];
-        return true;
+
+        var promptFile = result.GetValueForOption(promptFileOption);
+        if (promptFile is not null)
+        {
+            if (string.IsNullOrWhiteSpace(promptFile))
+            {
+                errorMessages.Add("--prompt-file is required");
+            }
+            else
+            {
+                options.PromptFile = promptFile;
+            }
+        }
+
+        var progressFile = result.GetValueForOption(progressFileOption);
+        if (progressFile is not null)
+        {
+            if (string.IsNullOrWhiteSpace(progressFile))
+            {
+                errorMessages.Add("--progress-file is required");
+            }
+            else
+            {
+                options.ProgressFile = progressFile;
+            }
+        }
+
+        var issuesFile = result.GetValueForOption(issuesFileOption);
+        if (issuesFile is not null)
+        {
+            if (string.IsNullOrWhiteSpace(issuesFile))
+            {
+                errorMessages.Add("--issues-file is required");
+            }
+            else
+            {
+                options.IssuesFile = issuesFile;
+            }
+        }
+
+        if (result.GetValueForOption(refreshIssuesOption))
+        {
+            options.RefreshIssues = true;
+        }
+
+        var repo = result.GetValueForOption(repoOption);
+        if (repo is not null)
+        {
+            if (string.IsNullOrWhiteSpace(repo))
+            {
+                errorMessages.Add("--repo is required");
+            }
+            else
+            {
+                options.Repo = repo;
+            }
+        }
+
+        var cliPath = result.GetValueForOption(cliPathOption);
+        if (cliPath is not null)
+        {
+            if (string.IsNullOrWhiteSpace(cliPath))
+            {
+                errorMessages.Add("--cli-path is required");
+            }
+            else
+            {
+                options.CliPath = cliPath;
+            }
+        }
+
+        var cliUrl = result.GetValueForOption(cliUrlOption);
+        if (cliUrl is not null)
+        {
+            if (string.IsNullOrWhiteSpace(cliUrl))
+            {
+                errorMessages.Add("--cli-url is required");
+            }
+            else
+            {
+                options.CliUrl = cliUrl;
+            }
+        }
+
+        if (result.Errors.Count > 0)
+        {
+            errorMessages.AddRange(result.Errors.Select(e => e.Message));
+        }
+
+        if (showHelp)
+        {
+            return (null, null, printInitialConfig, configFile, true);
+        }
+
+        if (errorMessages.Count > 0)
+        {
+            return (null, string.Join(Environment.NewLine, errorMessages), printInitialConfig, configFile, false);
+        }
+
+        return (options, null, printInitialConfig, configFile, false);
     }
 
     internal static void PrintUsage(TextWriter w)
     {
+        var root = BuildRootCommand();
+        var helpBuilder = new HelpBuilder(LocalizationResources.Instance);
         w.WriteLine("Coralph - Ralph loop runner using GitHub Copilot SDK");
         w.WriteLine();
         w.WriteLine("Usage:");
         w.WriteLine("  dotnet run --project src/Coralph -- [options]");
         w.WriteLine();
-        w.WriteLine("Options:");
-        w.WriteLine("  -h, --help             Show help");
-        w.WriteLine("  --max-iterations <n>   Max loop iterations (default: 10)");
-        w.WriteLine("  --model <name>         Model (default: gpt-5.1-codex)");
-        w.WriteLine("  --prompt-file <path>   Prompt file (default: prompt.md)");
-        w.WriteLine("  --progress-file <path> Progress file (default: progress.txt)");
-        w.WriteLine("  --issues-file <path>   Issues json file (default: issues.json)");
-        w.WriteLine("  --refresh-issues       Refresh issues.json via `gh issue list`");
-        w.WriteLine("  --repo <owner/name>    Optional repo override for gh");
-        w.WriteLine("  --cli-path <path>      Optional: Copilot CLI executable path");
-        w.WriteLine("  --cli-url <host:port>  Optional: connect to existing CLI server");
-        w.WriteLine("  --config <path>        Optional: JSON config file (default: coralph.config.json)");
-        w.WriteLine("  --initial-config       Writes default config json and exits");
-        w.WriteLine();
-        w.WriteLine("The loop stops early when the assistant output contains the sentinel: COMPLETE");
+        helpBuilder.Write(root, w);
+    }
+
+    private static RootCommand BuildRootCommand()
+    {
+        var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
+        root.AddOption(new Option<bool>(new[] { "-h", "--help" }, "Show help"));
+        root.AddOption(new Option<int?>("--max-iterations", "Max loop iterations (default: 10)"));
+        root.AddOption(new Option<string?>("--model", "Model (default: GPT-5.1-Codex)"));
+        root.AddOption(new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)"));
+        root.AddOption(new Option<string?>("--progress-file", "Progress file (default: progress.txt)"));
+        root.AddOption(new Option<string?>("--issues-file", "Issues json file (default: issues.json)"));
+        root.AddOption(new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`"));
+        root.AddOption(new Option<string?>("--repo", "Optional repo override for gh"));
+        root.AddOption(new Option<string?>("--cli-path", "Optional: Copilot CLI executable path"));
+        root.AddOption(new Option<string?>("--cli-url", "Optional: connect to existing CLI server"));
+        root.AddOption(new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)"));
+        root.AddOption(new Option<bool>("--initial-config", "Writes default config json and exits"));
+        return root;
     }
 }

@@ -5,7 +5,7 @@ using System.Text.Json;
 using Coralph;
 using Microsoft.Extensions.Configuration;
 
-var (overrides, err, initialConfig, configFile) = ArgParser.Parse(args);
+var (overrides, err, initialConfig, configFile, showHelp) = ArgParser.Parse(args);
 if (overrides is null)
 {
     if (err is not null)
@@ -14,8 +14,9 @@ if (overrides is null)
         Console.Error.WriteLine();
     }
 
-    ArgParser.PrintUsage(err is null ? Console.Out : Console.Error);
-    return err is null ? 0 : 2;
+    var output = err is null ? Console.Out : Console.Error;
+    ArgParser.PrintUsage(output);
+    return showHelp && err is null ? 0 : 2;
 }
 
 if (initialConfig)
