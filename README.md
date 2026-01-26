@@ -2,14 +2,33 @@
 
 A first cut of a “Ralph loop” runner implemented in C#/.NET 10 using the GitHub Copilot SDK.
 
-## Prerequisites
+## Installation
 
+### Option 1: Download Pre-built Binary (Recommended)
+
+Download the latest release for your platform from the [Releases page](https://github.com/dariuszparys/coralph/releases):
+
+- **Windows**: `coralph-win-x64.exe`
+- **macOS (Intel)**: `coralph-osx-x64`
+- **macOS (Apple Silicon)**: `coralph-osx-arm64`
+- **Linux**: `coralph-linux-x64`
+
+After downloading:
+- **macOS/Linux**: Make the binary executable: `chmod +x coralph-*`
+- **Windows**: Run directly or add to your PATH
+
+### Option 2: Build from Source
+
+**Prerequisites:**
 - .NET SDK 10 preview
 - GitHub CLI (`gh`) authenticated if you use `--refresh-issues`
 
 ## Run
 
 ```bash
+# If using pre-built binary, replace 'dotnet run --project src/Coralph --' with './coralph-<platform>'
+# For example: ./coralph-linux-x64 --max-iterations 10
+
 # optional: refresh issues.json using gh
 (dotnet run --project src/Coralph -- --refresh-issues --repo owner/name) || true
 

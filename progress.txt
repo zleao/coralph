@@ -412,3 +412,16 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Removing specialized modes (like --generate-issues) simplifies the tool without losing essential workflow capabilities
   - Keeping ShowReasoning and ColorizedOutput provides necessary debugging/accessibility while still reducing complexity
   - This cleanup reduces cognitive load for users discovering the tool and maintainers extending it
+
+---
+## 2026-01-26 - #30
+
+- Created GitHub Actions release workflow to build self-contained executables for Windows, macOS (Intel & ARM), and Linux
+- Updated README with download instructions and usage examples for pre-built binaries
+- Tested local publish build (linux-x64) to verify workflow configuration
+- Files changed: .github/workflows/release.yml, README.md
+- **Learnings:**
+  - GitHub Actions matrix strategy allows building for multiple platforms in parallel
+  - Self-contained single-file publish creates ~77MB executable but requires no .NET runtime
+  - Workflow triggers on tags (v*) for releases and workflow_dispatch for manual testing
+  - softprops/action-gh-release simplifies creating GitHub releases with artifacts
