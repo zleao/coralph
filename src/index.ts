@@ -53,7 +53,7 @@ const prompt = await Bun.file(promptFile).text();
 const issuesExists = await Bun.file(issuesFile).exists();
 const issues = issuesExists ? await Bun.file(issuesFile).text() : "[]";
 const progressExists = await Bun.file(progressFile).exists();
-const progress = progressExists ? await Bun.file(progressFile).text() : "";
+let progress = progressExists ? await Bun.file(progressFile).text() : "";
 
 const combinedPrompt = buildCombinedPrompt(prompt, issues, progress);
 
@@ -61,7 +61,8 @@ let output = "";
 for (let i = 1; i <= maxIterations; i += 1) {
   output = "<promise>COMPLETE</promise>";
   const entry = `\n\n---\n# Iteration ${i} (${new Date().toISOString()})\n\n${output}\n`;
-  await Bun.write(progressFile, progress + entry);
+  progress += entry;
+  await Bun.write(progressFile, progress);
   if (output.includes("<promise>COMPLETE</promise>")) {
     break;
   }
