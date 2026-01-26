@@ -462,3 +462,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Self-contained builds create larger binaries (~83MB) but eliminate .NET runtime dependency for end users
   - Keeping RID out of .csproj allows flexibility to build for different platforms without editing the project file
   - Workflow now has simpler, more maintainable publish command
+
+---
+## 2026-01-26 - #35
+
+- Fixed release workflow to prevent duplicate asset name conflicts causing 404 errors
+- Added rename step to give each platform binary a unique name before uploading to GitHub release
+- Files changed: .github/workflows/release.yml
+- **Learnings:**
+  - GitHub releases reject duplicate asset names even from different platforms
+  - The 404 error occurs when trying to upload an asset with a name that already exists in the release
+  - Solution: Rename binaries to include platform identifier (coralph-linux-x64, coralph-win-x64.exe, etc.)
+  - The mv commands flatten the artifact directory structure created by download-artifact@v4

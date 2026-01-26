@@ -65,14 +65,21 @@ jobs:
       with:
         path: ./artifacts
     
+    - name: Rename artifacts for release
+      run: |
+        mv ./artifacts/coralph-linux-x64/Coralph ./artifacts/coralph-linux-x64
+        mv ./artifacts/coralph-win-x64.exe/Coralph.exe ./artifacts/coralph-win-x64.exe
+        mv ./artifacts/coralph-osx-x64/Coralph ./artifacts/coralph-osx-x64
+        mv ./artifacts/coralph-osx-arm64/Coralph ./artifacts/coralph-osx-arm64
+    
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ./artifacts/coralph-linux-x64/Coralph
-          ./artifacts/coralph-win-x64.exe/Coralph.exe
-          ./artifacts/coralph-osx-x64/Coralph
-          ./artifacts/coralph-osx-arm64/Coralph
+          ./artifacts/coralph-linux-x64
+          ./artifacts/coralph-win-x64.exe
+          ./artifacts/coralph-osx-x64
+          ./artifacts/coralph-osx-arm64
         draft: false
         prerelease: false
       env:
