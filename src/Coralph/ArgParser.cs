@@ -20,22 +20,14 @@ internal static class ArgParser
         var promptFileOption = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
         var progressFileOption = new Option<string?>("--progress-file", "Progress file (default: progress.txt)");
         var issuesFileOption = new Option<string?>("--issues-file", "Issues json file (default: issues.json)");
-        var prdFileOption = new Option<string?>("--prd-file", "PRD markdown file for --generate-issues");
         var refreshIssuesOption = new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`");
         var repoOption = new Option<string?>("--repo", "Optional repo override for gh");
-        var generateIssuesOption = new Option<bool>("--generate-issues", "Generate GitHub issues from a PRD file");
         var cliPathOption = new Option<string?>("--cli-path", "Optional: Copilot CLI executable path");
         var cliUrlOption = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
         var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
         var initialConfigOption = new Option<bool>("--initial-config", "Writes default config json and exits");
-        var bannerOption = new Option<bool>("--banner", "Show Coralph banner and version info");
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
-        var verboseToolOutputOption = new Option<bool?>("--verbose-tool-output", "Show full tool output (default: false)");
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
-        var availableToolsOption = new Option<string?>("--available-tools", "Comma-separated list of allowed tools");
-        var excludedToolsOption = new Option<string?>("--excluded-tools", "Comma-separated list of excluded tools");
-        var systemMessageFileOption = new Option<string?>("--system-message-file", "Optional file with custom system message");
-        var replaceSystemMessageOption = new Option<bool>("--replace-system-message", "Replace (not append) default system message");
 
         root.AddOption(helpOption);
         root.AddOption(maxIterationsOption);
@@ -43,22 +35,14 @@ internal static class ArgParser
         root.AddOption(promptFileOption);
         root.AddOption(progressFileOption);
         root.AddOption(issuesFileOption);
-        root.AddOption(prdFileOption);
         root.AddOption(refreshIssuesOption);
         root.AddOption(repoOption);
-        root.AddOption(generateIssuesOption);
         root.AddOption(cliPathOption);
         root.AddOption(cliUrlOption);
         root.AddOption(configOption);
         root.AddOption(initialConfigOption);
-        root.AddOption(bannerOption);
         root.AddOption(showReasoningOption);
-        root.AddOption(verboseToolOutputOption);
         root.AddOption(colorizedOutputOption);
-        root.AddOption(availableToolsOption);
-        root.AddOption(excludedToolsOption);
-        root.AddOption(systemMessageFileOption);
-        root.AddOption(replaceSystemMessageOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -130,19 +114,6 @@ internal static class ArgParser
             }
         }
 
-        var prdFile = result.GetValueForOption(prdFileOption);
-        if (prdFile is not null)
-        {
-            if (string.IsNullOrWhiteSpace(prdFile))
-            {
-                errorMessages.Add("--prd-file is required");
-            }
-            else
-            {
-                options.PrdFile = prdFile;
-            }
-        }
-
         if (result.GetValueForOption(refreshIssuesOption))
         {
             options.RefreshIssues = true;
@@ -161,67 +132,16 @@ internal static class ArgParser
             }
         }
 
-        if (result.GetValueForOption(generateIssuesOption))
-        {
-            options.GenerateIssues = true;
-        }
-
-        if (result.GetValueForOption(bannerOption))
-        {
-            options.Banner = true;
-        }
-
         var showReasoning = result.GetValueForOption(showReasoningOption);
         if (showReasoning.HasValue)
         {
             options.ShowReasoning = showReasoning.Value;
         }
 
-        var verboseToolOutput = result.GetValueForOption(verboseToolOutputOption);
-        if (verboseToolOutput.HasValue)
-        {
-            options.VerboseToolOutput = verboseToolOutput.Value;
-        }
-
         var colorizedOutput = result.GetValueForOption(colorizedOutputOption);
         if (colorizedOutput.HasValue)
         {
             options.ColorizedOutput = colorizedOutput.Value;
-        }
-
-        var availableTools = result.GetValueForOption(availableToolsOption);
-        if (!string.IsNullOrWhiteSpace(availableTools))
-        {
-            options.AvailableTools = availableTools.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList();
-        }
-
-        var excludedTools = result.GetValueForOption(excludedToolsOption);
-        if (!string.IsNullOrWhiteSpace(excludedTools))
-        {
-            options.ExcludedTools = excludedTools.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList();
-        }
-
-        var systemMessageFile = result.GetValueForOption(systemMessageFileOption);
-        if (!string.IsNullOrWhiteSpace(systemMessageFile))
-        {
-            options.SystemMessageFile = systemMessageFile;
-        }
-
-        if (result.GetValueForOption(replaceSystemMessageOption))
-        {
-            options.ReplaceSystemMessage = true;
-        }
-
-        if (options.GenerateIssues == true && string.IsNullOrWhiteSpace(options.PrdFile))
-        {
-            errorMessages.Add("--prd-file is required when using --generate-issues");
-        }
-
-        if (options.GenerateIssues != true && !string.IsNullOrWhiteSpace(options.PrdFile))
-        {
-            errorMessages.Add("--prd-file requires --generate-issues");
         }
 
         var cliPath = result.GetValueForOption(cliPathOption);
@@ -289,22 +209,14 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)"));
         root.AddOption(new Option<string?>("--progress-file", "Progress file (default: progress.txt)"));
         root.AddOption(new Option<string?>("--issues-file", "Issues json file (default: issues.json)"));
-        root.AddOption(new Option<string?>("--prd-file", "PRD markdown file for --generate-issues"));
         root.AddOption(new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`"));
         root.AddOption(new Option<string?>("--repo", "Optional repo override for gh"));
-        root.AddOption(new Option<bool>("--generate-issues", "Generate GitHub issues from a PRD file"));
         root.AddOption(new Option<string?>("--cli-path", "Optional: Copilot CLI executable path"));
         root.AddOption(new Option<string?>("--cli-url", "Optional: connect to existing CLI server"));
         root.AddOption(new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)"));
         root.AddOption(new Option<bool>("--initial-config", "Writes default config json and exits"));
-        root.AddOption(new Option<bool>("--banner", "Show Coralph banner and version info"));
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
-        root.AddOption(new Option<bool?>("--verbose-tool-output", "Show full tool output (default: false)"));
         root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
-        root.AddOption(new Option<string?>("--available-tools", "Comma-separated list of allowed tools"));
-        root.AddOption(new Option<string?>("--excluded-tools", "Comma-separated list of excluded tools"));
-        root.AddOption(new Option<string?>("--system-message-file", "Optional file with custom system message"));
-        root.AddOption(new Option<bool>("--replace-system-message", "Replace (not append) default system message"));
         return root;
     }
 }

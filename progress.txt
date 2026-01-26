@@ -397,3 +397,18 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Configuration sprawl happens gradually - periodic audits help identify rarely-used flags
   - Grouping flags by use case (core vs debugging vs advanced) clarifies what can be removed
   - Providing multiple cleanup options lets maintainers choose their comfort level
+
+---
+## 2026-01-26 - #29
+
+- Implemented Option 2 (moderate cleanup): removed 8 configuration flags to reduce from 22 to 14 total flags
+- Removed flags: Banner, GenerateIssues, PrdFile, VerboseToolOutput, AvailableTools, ExcludedTools, SystemMessageFile, ReplaceSystemMessage
+- Removed associated code: RunIssueGeneratorAsync method, PRD generation logic, banner display, system message customization
+- Removed Figgle dependency (was only used for banner)
+- Updated documentation: README.md examples and Features section, coralph.config.json
+- Files changed: src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, src/Coralph/Program.cs, src/Coralph/CopilotRunner.cs, src/Coralph/Coralph.csproj, README.md, coralph.config.json
+- **Learnings:**
+  - Configuration sprawl can be reversed by focusing on core use cases vs. one-shot or advanced features
+  - Removing specialized modes (like --generate-issues) simplifies the tool without losing essential workflow capabilities
+  - Keeping ShowReasoning and ColorizedOutput provides necessary debugging/accessibility while still reducing complexity
+  - This cleanup reduces cognitive load for users discovering the tool and maintainers extending it

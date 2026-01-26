@@ -11,25 +11,15 @@ internal sealed class LoopOptions
     public string PromptFile { get; set; } = "prompt.md";
     public string ProgressFile { get; set; } = "progress.txt";
     public string IssuesFile { get; set; } = "issues.json";
-    public string? PrdFile { get; set; }
 
-    public bool Banner { get; set; }
     public bool RefreshIssues { get; set; }
     public string? Repo { get; set; }
 
-    public bool GenerateIssues { get; set; }
     public string? CliPath { get; set; }
     public string? CliUrl { get; set; }
 
     public bool ShowReasoning { get; set; } = true;
-    public bool VerboseToolOutput { get; set; } = false;
     public bool ColorizedOutput { get; set; } = true;
-
-    public List<string>? AvailableTools { get; set; }
-    public List<string>? ExcludedTools { get; set; }
-
-    public string? SystemMessageFile { get; set; }
-    public bool ReplaceSystemMessage { get; set; } = false;
 }
 
 internal sealed class LoopOptionsOverrides
@@ -40,23 +30,13 @@ internal sealed class LoopOptionsOverrides
     public string? PromptFile { get; set; }
     public string? ProgressFile { get; set; }
     public string? IssuesFile { get; set; }
-    public string? PrdFile { get; set; }
 
-    public bool? Banner { get; set; }
     public bool? RefreshIssues { get; set; }
     public string? Repo { get; set; }
 
-    public bool? GenerateIssues { get; set; }
     public string? CliPath { get; set; }
     public string? CliUrl { get; set; }
 
     public bool? ShowReasoning { get; set; }
-    public bool? VerboseToolOutput { get; set; }
     public bool? ColorizedOutput { get; set; }
-
-    public List<string>? AvailableTools { get; set; }
-    public List<string>? ExcludedTools { get; set; }
-
-    public string? SystemMessageFile { get; set; }
-    public bool? ReplaceSystemMessage { get; set; }
 }

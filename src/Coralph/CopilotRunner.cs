@@ -22,35 +22,12 @@ internal static class CopilotRunner
 
         var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile);
 
-        SystemMessageConfig? systemMessage = null;
-        if (!string.IsNullOrWhiteSpace(opt.SystemMessageFile))
-        {
-            var systemMessagePath = opt.SystemMessageFile;
-            if (!Path.IsPathRooted(systemMessagePath))
-            {
-                systemMessagePath = Path.Combine(Directory.GetCurrentDirectory(), systemMessagePath);
-            }
-
-            if (File.Exists(systemMessagePath))
-            {
-                var content = await File.ReadAllTextAsync(systemMessagePath, ct);
-                systemMessage = new SystemMessageConfig
-                {
-                    Mode = opt.ReplaceSystemMessage ? SystemMessageMode.Replace : SystemMessageMode.Append,
-                    Content = content
-                };
-            }
-        }
-
         string result;
         await using (var session = await client.CreateSessionAsync(new SessionConfig
         {
             Model = opt.Model,
             Streaming = true,
             Tools = customTools,
-            AvailableTools = opt.AvailableTools,
-            ExcludedTools = opt.ExcludedTools,
-            SystemMessage = systemMessage,
             OnPermissionRequest = (request, invocation) =>
                 Task.FromResult(new PermissionRequestResult { Kind = "approved" }),
         }))
@@ -128,9 +105,7 @@ internal static class CopilotRunner
                                 lastToolName = null;
                                 break;
                             }
-                            var display = opt.VerboseToolOutput
-                                ? toolOutput
-                                : SummarizeToolOutput(toolOutput);
+                            var display = SummarizeToolOutput(toolOutput);
                             ConsoleOutput.WriteToolComplete(lastToolName ?? "unknown", display);
                         }
                         lastToolName = null;
