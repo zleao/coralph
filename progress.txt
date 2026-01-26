@@ -247,3 +247,10 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Short-circuiting the loop for one-shot flows keeps loop behavior intact
   - Parsing gh commands from fenced blocks is a simple, reliable tracer bullet
+
+## 2026-01-26 - #15
+
+- Added Bun/TypeScript tracer bullet with minimal CLI loop stub and basic project scaffold
+- Files changed: package.json, tsconfig.json, src/index.ts
+- **Learnings:**
+  - Keep tracer bullets focused on file I/O and stop condition wiring before adding dependencies
