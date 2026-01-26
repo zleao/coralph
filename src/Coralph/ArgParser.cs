@@ -32,6 +32,10 @@ internal static class ArgParser
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
         var verboseToolOutputOption = new Option<bool?>("--verbose-tool-output", "Show full tool output (default: false)");
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
+        var availableToolsOption = new Option<string?>("--available-tools", "Comma-separated list of allowed tools");
+        var excludedToolsOption = new Option<string?>("--excluded-tools", "Comma-separated list of excluded tools");
+        var systemMessageFileOption = new Option<string?>("--system-message-file", "Optional file with custom system message");
+        var replaceSystemMessageOption = new Option<bool>("--replace-system-message", "Replace (not append) default system message");
 
         root.AddOption(helpOption);
         root.AddOption(maxIterationsOption);
@@ -51,6 +55,10 @@ internal static class ArgParser
         root.AddOption(showReasoningOption);
         root.AddOption(verboseToolOutputOption);
         root.AddOption(colorizedOutputOption);
+        root.AddOption(availableToolsOption);
+        root.AddOption(excludedToolsOption);
+        root.AddOption(systemMessageFileOption);
+        root.AddOption(replaceSystemMessageOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -181,6 +189,31 @@ internal static class ArgParser
             options.ColorizedOutput = colorizedOutput.Value;
         }
 
+        var availableTools = result.GetValueForOption(availableToolsOption);
+        if (!string.IsNullOrWhiteSpace(availableTools))
+        {
+            options.AvailableTools = availableTools.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+        }
+
+        var excludedTools = result.GetValueForOption(excludedToolsOption);
+        if (!string.IsNullOrWhiteSpace(excludedTools))
+        {
+            options.ExcludedTools = excludedTools.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+        }
+
+        var systemMessageFile = result.GetValueForOption(systemMessageFileOption);
+        if (!string.IsNullOrWhiteSpace(systemMessageFile))
+        {
+            options.SystemMessageFile = systemMessageFile;
+        }
+
+        if (result.GetValueForOption(replaceSystemMessageOption))
+        {
+            options.ReplaceSystemMessage = true;
+        }
+
         if (options.GenerateIssues == true && string.IsNullOrWhiteSpace(options.PrdFile))
         {
             errorMessages.Add("--prd-file is required when using --generate-issues");
@@ -268,6 +301,10 @@ internal static class ArgParser
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
         root.AddOption(new Option<bool?>("--verbose-tool-output", "Show full tool output (default: false)"));
         root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
+        root.AddOption(new Option<string?>("--available-tools", "Comma-separated list of allowed tools"));
+        root.AddOption(new Option<string?>("--excluded-tools", "Comma-separated list of excluded tools"));
+        root.AddOption(new Option<string?>("--system-message-file", "Optional file with custom system message"));
+        root.AddOption(new Option<bool>("--replace-system-message", "Replace (not append) default system message"));
         return root;
     }
 }

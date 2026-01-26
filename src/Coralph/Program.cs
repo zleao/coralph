@@ -150,6 +150,10 @@ static void ApplyOverrides(LoopOptions target, LoopOptionsOverrides overrides)
     if (overrides.ShowReasoning is { } showReasoning) target.ShowReasoning = showReasoning;
     if (overrides.VerboseToolOutput is { } verboseToolOutput) target.VerboseToolOutput = verboseToolOutput;
     if (overrides.ColorizedOutput is { } colorizedOutput) target.ColorizedOutput = colorizedOutput;
+    if (overrides.AvailableTools is not null) target.AvailableTools = overrides.AvailableTools;
+    if (overrides.ExcludedTools is not null) target.ExcludedTools = overrides.ExcludedTools;
+    if (!string.IsNullOrWhiteSpace(overrides.SystemMessageFile)) target.SystemMessageFile = overrides.SystemMessageFile;
+    if (overrides.ReplaceSystemMessage is { } replaceSystemMessage) target.ReplaceSystemMessage = replaceSystemMessage;
 }
 
 static string BuildCombinedPrompt(string promptTemplate, string issuesJson, string progress)

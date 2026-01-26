@@ -24,6 +24,12 @@ internal sealed class LoopOptions
     public bool ShowReasoning { get; set; } = true;
     public bool VerboseToolOutput { get; set; } = false;
     public bool ColorizedOutput { get; set; } = true;
+
+    public List<string>? AvailableTools { get; set; }
+    public List<string>? ExcludedTools { get; set; }
+
+    public string? SystemMessageFile { get; set; }
+    public bool ReplaceSystemMessage { get; set; } = false;
 }
 
 internal sealed class LoopOptionsOverrides
@@ -47,4 +53,10 @@ internal sealed class LoopOptionsOverrides
     public bool? ShowReasoning { get; set; }
     public bool? VerboseToolOutput { get; set; }
     public bool? ColorizedOutput { get; set; }
+
+    public List<string>? AvailableTools { get; set; }
+    public List<string>? ExcludedTools { get; set; }
+
+    public string? SystemMessageFile { get; set; }
+    public bool? ReplaceSystemMessage { get; set; }
 }
