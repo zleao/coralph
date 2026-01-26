@@ -20,11 +20,14 @@ internal static class CopilotRunner
         await using var client = new CopilotClient(clientOptions);
         await client.StartAsync();
 
+        var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile);
+
         string result;
         await using (var session = await client.CreateSessionAsync(new SessionConfig
         {
             Model = opt.Model,
             Streaming = true,
+            Tools = customTools,
             OnPermissionRequest = (request, invocation) =>
                 Task.FromResult(new PermissionRequestResult { Kind = "approved" }),
         }))
@@ -33,24 +36,67 @@ internal static class CopilotRunner
             var output = new StringBuilder();
 
             string? lastToolName = null;
+            bool inReasoningMode = false;
+            bool inAssistantMode = false;
+
             using var sub = session.On(evt =>
             {
                 switch (evt)
                 {
                     case AssistantMessageDeltaEvent delta:
-                        ConsoleOutput.Write(delta.Data.DeltaContent);
+                        if (!inAssistantMode)
+                        {
+                            if (inReasoningMode)
+                            {
+                                ConsoleOutput.WriteLine();
+                                inReasoningMode = false;
+                            }
+                            inAssistantMode = true;
+                        }
+                        if (opt.ColorizedOutput)
+                        {
+                            ConsoleOutput.WriteAssistant(delta.Data.DeltaContent);
+                        }
+                        else
+                        {
+                            ConsoleOutput.Write(delta.Data.DeltaContent);
+                        }
                         output.Append(delta.Data.DeltaContent);
                         break;
                     case AssistantReasoningDeltaEvent reasoning:
-                        // Stream reasoning to console only (not saved to progress)
-                        ConsoleOutput.Write(reasoning.Data.DeltaContent);
+                        if (!opt.ShowReasoning)
+                        {
+                            break;
+                        }
+                        if (!inReasoningMode)
+                        {
+                            if (inAssistantMode)
+                            {
+                                ConsoleOutput.WriteLine();
+                                inAssistantMode = false;
+                            }
+                            inReasoningMode = true;
+                        }
+                        if (opt.ColorizedOutput)
+                        {
+                            ConsoleOutput.WriteReasoning(reasoning.Data.DeltaContent);
+                        }
+                        else
+                        {
+                            ConsoleOutput.Write(reasoning.Data.DeltaContent);
+                        }
                         break;
                     case ToolExecutionStartEvent toolStart:
+                        if (inReasoningMode || inAssistantMode)
+                        {
+                            ConsoleOutput.WriteLine();
+                            inReasoningMode = false;
+                            inAssistantMode = false;
+                        }
                         lastToolName = toolStart.Data.ToolName;
-                        WriteToolHeader($"[Tool: {toolStart.Data.ToolName}]");
+                        ConsoleOutput.WriteToolStart(toolStart.Data.ToolName);
                         break;
                     case ToolExecutionCompleteEvent toolComplete:
-                        // Show tool output in console
                         var toolOutput = toolComplete.Data.Result?.Content;
                         if (!string.IsNullOrWhiteSpace(toolOutput))
                         {
@@ -59,14 +105,18 @@ internal static class CopilotRunner
                                 lastToolName = null;
                                 break;
                             }
-                            var display = SummarizeToolOutput(toolOutput);
-                            ConsoleOutput.WriteLine(display);
+                            var display = opt.VerboseToolOutput
+                                ? toolOutput
+                                : SummarizeToolOutput(toolOutput);
+                            ConsoleOutput.WriteToolComplete(lastToolName ?? "unknown", display);
                         }
                         lastToolName = null;
                         break;
                     case AssistantMessageEvent:
                     case AssistantReasoningEvent:
                         ConsoleOutput.WriteLine();
+                        inReasoningMode = false;
+                        inAssistantMode = false;
                         break;
                     case SessionErrorEvent err:
                         done.TrySetException(new InvalidOperationException(err.Data.Message));
@@ -89,23 +139,6 @@ internal static class CopilotRunner
 
         await client.StopAsync();
         return result;
-    }
-
-    private static void WriteToolHeader(string text)
-    {
-        WriteToolHeader(text, Console.IsOutputRedirected);
-    }
-
-    internal static void WriteToolHeader(string text, bool isOutputRedirected)
-    {
-        if (isOutputRedirected)
-        {
-            ConsoleOutput.WriteLine(text);
-            return;
-        }
-
-        var escaped = Markup.Escape(text);
-        ConsoleOutput.MarkupLine($"[black on orange1] {escaped} [/]");
     }
 
     private static string SummarizeToolOutput(string toolOutput)

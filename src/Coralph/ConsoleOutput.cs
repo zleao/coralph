@@ -40,6 +40,70 @@ internal static class ConsoleOutput
 
     internal static void MarkupLine(string markup) => Out.MarkupLine(markup);
 
+    internal static void MarkupLineInterpolated(FormattableString markup) => Out.MarkupLineInterpolated(markup);
+
+    internal static void WriteReasoning(string text)
+    {
+        if (Console.IsOutputRedirected)
+        {
+            Write(text);
+        }
+        else
+        {
+            Out.Markup($"[dim cyan]{Markup.Escape(text)}[/]");
+        }
+    }
+
+    internal static void WriteAssistant(string text)
+    {
+        if (Console.IsOutputRedirected)
+        {
+            Write(text);
+        }
+        else
+        {
+            Out.Markup($"[green]{Markup.Escape(text)}[/]");
+        }
+    }
+
+    internal static void WriteToolStart(string toolName)
+    {
+        if (Console.IsOutputRedirected)
+        {
+            WriteLine($"[Tool: {toolName}]");
+        }
+        else
+        {
+            MarkupLineInterpolated($"[black on yellow] ▶ {toolName} [/]");
+        }
+    }
+
+    internal static void WriteToolComplete(string toolName, string summary)
+    {
+        if (Console.IsOutputRedirected)
+        {
+            WriteLine(summary);
+        }
+        else
+        {
+            Out.MarkupLine($"[dim yellow]{Markup.Escape(summary)}[/]");
+        }
+    }
+
+    internal static void WriteSectionSeparator(string title)
+    {
+        if (Console.IsOutputRedirected)
+        {
+            WriteLine($"\n--- {title} ---\n");
+        }
+        else
+        {
+            WriteLine();
+            Out.Write(new Rule($"[bold blue]{title}[/]") { Justification = Justify.Left });
+            WriteLine();
+        }
+    }
+
     private static IAnsiConsole CreateConsole(TextWriter writer, bool isRedirected)
     {
         var settings = new AnsiConsoleSettings

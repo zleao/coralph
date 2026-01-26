@@ -1,30 +1,47 @@
 using Coralph;
 using Spectre.Console;
 using Spectre.Console.Testing;
-using System.Reflection;
 
 namespace Coralph.Tests;
 
 public class ToolOutputStylingTests
 {
     [Fact]
-    public void ToolHeader_UsesOrangeMarkup()
+    public void ToolStart_DisplaysToolName()
     {
         var console = new TestConsole();
         ConsoleOutput.Configure(console, console);
 
-        var method = typeof(CopilotRunner).GetMethod(
-            "WriteToolHeader",
-            BindingFlags.NonPublic | BindingFlags.Static,
-            binder: null,
-            types: new[] { typeof(string), typeof(bool) },
-            modifiers: null);
-        Assert.NotNull(method);
-
-        method!.Invoke(null, new object[] { "[Tool: sample]", false });
+        ConsoleOutput.WriteToolStart("sample_tool");
 
         var output = console.Output;
-        Assert.Contains("[Tool: sample]", output);
+        Assert.Contains("sample_tool", output);
+        ConsoleOutput.Reset();
+    }
+
+    [Fact]
+    public void WriteAssistant_UsesGreenMarkup()
+    {
+        var console = new TestConsole();
+        ConsoleOutput.Configure(console, console);
+
+        ConsoleOutput.WriteAssistant("Hello");
+
+        var output = console.Output;
+        Assert.Contains("Hello", output);
+        ConsoleOutput.Reset();
+    }
+
+    [Fact]
+    public void WriteReasoning_UsesCyanMarkup()
+    {
+        var console = new TestConsole();
+        ConsoleOutput.Configure(console, console);
+
+        ConsoleOutput.WriteReasoning("Thinking...");
+
+        var output = console.Output;
+        Assert.Contains("Thinking...", output);
         ConsoleOutput.Reset();
     }
 }

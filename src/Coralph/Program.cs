@@ -147,6 +147,9 @@ static void ApplyOverrides(LoopOptions target, LoopOptionsOverrides overrides)
     if (overrides.GenerateIssues is { } generateIssues) target.GenerateIssues = generateIssues;
     if (!string.IsNullOrWhiteSpace(overrides.CliPath)) target.CliPath = overrides.CliPath;
     if (!string.IsNullOrWhiteSpace(overrides.CliUrl)) target.CliUrl = overrides.CliUrl;
+    if (overrides.ShowReasoning is { } showReasoning) target.ShowReasoning = showReasoning;
+    if (overrides.VerboseToolOutput is { } verboseToolOutput) target.VerboseToolOutput = verboseToolOutput;
+    if (overrides.ColorizedOutput is { } colorizedOutput) target.ColorizedOutput = colorizedOutput;
 }
 
 static string BuildCombinedPrompt(string promptTemplate, string issuesJson, string progress)

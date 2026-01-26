@@ -20,6 +20,10 @@ internal sealed class LoopOptions
     public bool GenerateIssues { get; set; }
     public string? CliPath { get; set; }
     public string? CliUrl { get; set; }
+
+    public bool ShowReasoning { get; set; } = true;
+    public bool VerboseToolOutput { get; set; } = false;
+    public bool ColorizedOutput { get; set; } = true;
 }
 
 internal sealed class LoopOptionsOverrides
@@ -39,4 +43,8 @@ internal sealed class LoopOptionsOverrides
     public bool? GenerateIssues { get; set; }
     public string? CliPath { get; set; }
     public string? CliUrl { get; set; }
+
+    public bool? ShowReasoning { get; set; }
+    public bool? VerboseToolOutput { get; set; }
+    public bool? ColorizedOutput { get; set; }
 }

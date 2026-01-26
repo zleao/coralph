@@ -29,6 +29,9 @@ internal static class ArgParser
         var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
         var initialConfigOption = new Option<bool>("--initial-config", "Writes default config json and exits");
         var bannerOption = new Option<bool>("--banner", "Show Coralph banner and version info");
+        var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
+        var verboseToolOutputOption = new Option<bool?>("--verbose-tool-output", "Show full tool output (default: false)");
+        var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
 
         root.AddOption(helpOption);
         root.AddOption(maxIterationsOption);
@@ -45,6 +48,9 @@ internal static class ArgParser
         root.AddOption(configOption);
         root.AddOption(initialConfigOption);
         root.AddOption(bannerOption);
+        root.AddOption(showReasoningOption);
+        root.AddOption(verboseToolOutputOption);
+        root.AddOption(colorizedOutputOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -157,6 +163,24 @@ internal static class ArgParser
             options.Banner = true;
         }
 
+        var showReasoning = result.GetValueForOption(showReasoningOption);
+        if (showReasoning.HasValue)
+        {
+            options.ShowReasoning = showReasoning.Value;
+        }
+
+        var verboseToolOutput = result.GetValueForOption(verboseToolOutputOption);
+        if (verboseToolOutput.HasValue)
+        {
+            options.VerboseToolOutput = verboseToolOutput.Value;
+        }
+
+        var colorizedOutput = result.GetValueForOption(colorizedOutputOption);
+        if (colorizedOutput.HasValue)
+        {
+            options.ColorizedOutput = colorizedOutput.Value;
+        }
+
         if (options.GenerateIssues == true && string.IsNullOrWhiteSpace(options.PrdFile))
         {
             errorMessages.Add("--prd-file is required when using --generate-issues");
@@ -241,6 +265,9 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)"));
         root.AddOption(new Option<bool>("--initial-config", "Writes default config json and exits"));
         root.AddOption(new Option<bool>("--banner", "Show Coralph banner and version info"));
+        root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
+        root.AddOption(new Option<bool?>("--verbose-tool-output", "Show full tool output (default: false)"));
+        root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
         return root;
     }
 }
