@@ -24,6 +24,9 @@ dotnet run --project src/Coralph -- --config coralph.config.json --max-iteration
 
 # run loop using the bundled sample harness (no GitHub access needed)
 dotnet run --project src/Coralph -- --issues-file issues.sample.json --max-iterations 10
+
+# generate GitHub issues from a PRD markdown file
+dotnet run --project src/Coralph -- --generate-issues --prd-file path/to/prd.md --repo owner/name
 ```
 
 ## Build a distributable binary
@@ -41,5 +44,6 @@ Files used:
 - `issues.json` (input; optional refresh via `gh`)
 - `progress.txt` (append-only log)
 - `coralph.config.json` (optional configuration overrides)
+- `--prd-file` (input; used with `--generate-issues`)
 
 The loop stops early when the assistant outputs a line containing `COMPLETE`.

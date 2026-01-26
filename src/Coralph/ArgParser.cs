@@ -20,8 +20,10 @@ internal static class ArgParser
         var promptFileOption = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
         var progressFileOption = new Option<string?>("--progress-file", "Progress file (default: progress.txt)");
         var issuesFileOption = new Option<string?>("--issues-file", "Issues json file (default: issues.json)");
+        var prdFileOption = new Option<string?>("--prd-file", "PRD markdown file for --generate-issues");
         var refreshIssuesOption = new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`");
         var repoOption = new Option<string?>("--repo", "Optional repo override for gh");
+        var generateIssuesOption = new Option<bool>("--generate-issues", "Generate GitHub issues from a PRD file");
         var cliPathOption = new Option<string?>("--cli-path", "Optional: Copilot CLI executable path");
         var cliUrlOption = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
         var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
@@ -33,8 +35,10 @@ internal static class ArgParser
         root.AddOption(promptFileOption);
         root.AddOption(progressFileOption);
         root.AddOption(issuesFileOption);
+        root.AddOption(prdFileOption);
         root.AddOption(refreshIssuesOption);
         root.AddOption(repoOption);
+        root.AddOption(generateIssuesOption);
         root.AddOption(cliPathOption);
         root.AddOption(cliUrlOption);
         root.AddOption(configOption);
@@ -110,6 +114,19 @@ internal static class ArgParser
             }
         }
 
+        var prdFile = result.GetValueForOption(prdFileOption);
+        if (prdFile is not null)
+        {
+            if (string.IsNullOrWhiteSpace(prdFile))
+            {
+                errorMessages.Add("--prd-file is required");
+            }
+            else
+            {
+                options.PrdFile = prdFile;
+            }
+        }
+
         if (result.GetValueForOption(refreshIssuesOption))
         {
             options.RefreshIssues = true;
@@ -126,6 +143,21 @@ internal static class ArgParser
             {
                 options.Repo = repo;
             }
+        }
+
+        if (result.GetValueForOption(generateIssuesOption))
+        {
+            options.GenerateIssues = true;
+        }
+
+        if (options.GenerateIssues == true && string.IsNullOrWhiteSpace(options.PrdFile))
+        {
+            errorMessages.Add("--prd-file is required when using --generate-issues");
+        }
+
+        if (options.GenerateIssues != true && !string.IsNullOrWhiteSpace(options.PrdFile))
+        {
+            errorMessages.Add("--prd-file requires --generate-issues");
         }
 
         var cliPath = result.GetValueForOption(cliPathOption);
@@ -193,8 +225,10 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)"));
         root.AddOption(new Option<string?>("--progress-file", "Progress file (default: progress.txt)"));
         root.AddOption(new Option<string?>("--issues-file", "Issues json file (default: issues.json)"));
+        root.AddOption(new Option<string?>("--prd-file", "PRD markdown file for --generate-issues"));
         root.AddOption(new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`"));
         root.AddOption(new Option<string?>("--repo", "Optional repo override for gh"));
+        root.AddOption(new Option<bool>("--generate-issues", "Generate GitHub issues from a PRD file"));
         root.AddOption(new Option<string?>("--cli-path", "Optional: Copilot CLI executable path"));
         root.AddOption(new Option<string?>("--cli-url", "Optional: connect to existing CLI server"));
         root.AddOption(new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)"));

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -46,6 +47,11 @@ Console.WriteLine(banner.TrimEnd());
 Console.WriteLine($"Coralph {GetVersionLabel()} | Model: {opt.Model}");
 
 var ct = CancellationToken.None;
+
+if (opt.GenerateIssues)
+{
+    return await RunIssueGeneratorAsync(opt, ct);
+}
 
 if (opt.RefreshIssues)
 {
@@ -121,8 +127,10 @@ static void ApplyOverrides(LoopOptions target, LoopOptionsOverrides overrides)
     if (!string.IsNullOrWhiteSpace(overrides.PromptFile)) target.PromptFile = overrides.PromptFile;
     if (!string.IsNullOrWhiteSpace(overrides.ProgressFile)) target.ProgressFile = overrides.ProgressFile;
     if (!string.IsNullOrWhiteSpace(overrides.IssuesFile)) target.IssuesFile = overrides.IssuesFile;
+    if (!string.IsNullOrWhiteSpace(overrides.PrdFile)) target.PrdFile = overrides.PrdFile;
     if (overrides.RefreshIssues is { } refresh) target.RefreshIssues = refresh;
     if (!string.IsNullOrWhiteSpace(overrides.Repo)) target.Repo = overrides.Repo;
+    if (overrides.GenerateIssues is { } generateIssues) target.GenerateIssues = generateIssues;
     if (!string.IsNullOrWhiteSpace(overrides.CliPath)) target.CliPath = overrides.CliPath;
     if (!string.IsNullOrWhiteSpace(overrides.CliUrl)) target.CliUrl = overrides.CliUrl;
 }
@@ -156,6 +164,225 @@ static string BuildCombinedPrompt(string promptTemplate, string issuesJson, stri
     sb.AppendLine("- Otherwise, output what you changed and what you will do next iteration.");
 
     return sb.ToString();
+}
+
+static async Task<int> RunIssueGeneratorAsync(LoopOptions opt, CancellationToken ct)
+{
+    if (string.IsNullOrWhiteSpace(opt.PrdFile))
+    {
+        Console.Error.WriteLine("ERROR: --prd-file is required when using --generate-issues.");
+        return 2;
+    }
+
+    var prdPath = opt.PrdFile;
+    if (!Path.IsPathRooted(prdPath))
+    {
+        prdPath = Path.Combine(Directory.GetCurrentDirectory(), prdPath);
+    }
+
+    if (!File.Exists(prdPath))
+    {
+        Console.Error.WriteLine($"PRD file not found: {prdPath}");
+        return 1;
+    }
+
+    var prdContent = await File.ReadAllTextAsync(prdPath, ct);
+    if (string.IsNullOrWhiteSpace(prdContent))
+    {
+        Console.Error.WriteLine("PRD file is empty.");
+        return 1;
+    }
+
+    var prompt = BuildPrdPrompt(prdContent);
+
+    string output;
+    try
+    {
+        output = await CopilotRunner.RunOnceAsync(opt, prompt, ct);
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
+        return 1;
+    }
+
+    if (string.IsNullOrWhiteSpace(output))
+    {
+        Console.Error.WriteLine("Copilot returned empty output.");
+        return 1;
+    }
+
+    Console.WriteLine(output);
+
+    var commands = ExtractGhIssueCommands(output);
+    if (commands.Count == 0)
+    {
+        Console.Error.WriteLine("No `gh issue create` commands found.");
+        return 1;
+    }
+
+    Console.WriteLine($"\nCreating {commands.Count} issue(s)...");
+    foreach (var command in commands)
+    {
+        var args = NormalizeGhArgs(command, opt.Repo);
+        Console.WriteLine($"gh {args}");
+        var (exitCode, stdout, stderr) = await RunGhAsync(args, ct);
+        if (!string.IsNullOrWhiteSpace(stdout))
+        {
+            Console.WriteLine(stdout.TrimEnd());
+        }
+
+        if (exitCode != 0)
+        {
+            if (!string.IsNullOrWhiteSpace(stderr))
+            {
+                Console.Error.WriteLine(stderr.TrimEnd());
+            }
+
+            Console.Error.WriteLine($"`gh` failed (exit {exitCode}).");
+            return exitCode;
+        }
+    }
+
+    return 0;
+}
+
+static string BuildPrdPrompt(string prdContent)
+{
+    var sb = new StringBuilder();
+    sb.AppendLine("You are the Lead Architect and Product Manager for Coralph, a C#/.NET 10 console app using the GitHub Copilot SDK.");
+    sb.AppendLine("Goal: refine the PRD input into a concise PRD and a granular issue plan.");
+    sb.AppendLine("Output format:");
+    sb.AppendLine("## PRD: [Feature Name]");
+    sb.AppendLine("Objective, Technical Implementation (reference Coralph: ArgParser.cs, LoopOptions.cs, Program.cs, CopilotRunner.cs), Verification.");
+    sb.AppendLine();
+    sb.AppendLine("## Implementation Plan");
+    sb.AppendLine("Provide GitHub CLI commands as a bash code block:");
+    sb.AppendLine("```bash");
+    sb.AppendLine("gh issue create --title \"...\" --body \"Line 1\\nLine 2\" --label \"enhancement\"");
+    sb.AppendLine("```");
+    sb.AppendLine();
+    sb.AppendLine("Rules:");
+    sb.AppendLine("- First issue must be a tracer bullet (skeleton end-to-end slice).");
+    sb.AppendLine("- Each issue adds one small, specific increment (no epics).");
+    sb.AppendLine("- Use single-line gh commands; escape newlines in --body with \\n.");
+    sb.AppendLine("- Use label \"documentation\" only for docs-only issues; otherwise \"enhancement\".");
+    sb.AppendLine("- Output only the PRD and Implementation Plan (no extra commentary).");
+    sb.AppendLine();
+    sb.AppendLine("# PRD_INPUT");
+    sb.AppendLine("```markdown");
+    sb.AppendLine(prdContent.Trim());
+    sb.AppendLine("```");
+    return sb.ToString();
+}
+
+static List<string> ExtractGhIssueCommands(string output)
+{
+    var normalized = output.Replace("\r\n", "\n");
+    var lines = normalized.Split('\n');
+    var fenced = ExtractGhIssueCommandsFromLines(lines, onlyInsideFence: true);
+    return fenced.Count > 0 ? fenced : ExtractGhIssueCommandsFromLines(lines, onlyInsideFence: false);
+}
+
+static List<string> ExtractGhIssueCommandsFromLines(string[] lines, bool onlyInsideFence)
+{
+    var commands = new List<string>();
+    var insideFence = false;
+    string? current = null;
+
+    foreach (var rawLine in lines)
+    {
+        var line = rawLine.Trim();
+        if (line.StartsWith("```", StringComparison.Ordinal))
+        {
+            insideFence = !insideFence;
+            if (!insideFence && current is not null)
+            {
+                commands.Add(current);
+                current = null;
+            }
+            continue;
+        }
+
+        if (onlyInsideFence && !insideFence)
+        {
+            continue;
+        }
+
+        if (current is not null)
+        {
+            current = $"{current} {line.TrimEnd('\\').Trim()}".Trim();
+            if (!line.EndsWith("\\", StringComparison.Ordinal))
+            {
+                commands.Add(current);
+                current = null;
+            }
+            continue;
+        }
+
+        if (line.StartsWith("gh issue create ", StringComparison.Ordinal))
+        {
+            if (line.EndsWith("\\", StringComparison.Ordinal))
+            {
+                current = line.TrimEnd('\\').Trim();
+            }
+            else
+            {
+                commands.Add(line);
+            }
+        }
+    }
+
+    if (current is not null)
+    {
+        commands.Add(current);
+    }
+
+    return commands;
+}
+
+static string NormalizeGhArgs(string command, string? repo)
+{
+    var args = command.Trim();
+    if (args.StartsWith("gh ", StringComparison.OrdinalIgnoreCase))
+    {
+        args = args[3..].Trim();
+    }
+
+    if (!string.IsNullOrWhiteSpace(repo) && !HasRepoArg(args))
+    {
+        args = $"{args} --repo {repo}";
+    }
+
+    return args;
+}
+
+static bool HasRepoArg(string args)
+{
+    return args.Contains("--repo ", StringComparison.OrdinalIgnoreCase)
+           || args.Contains("--repo=", StringComparison.OrdinalIgnoreCase)
+           || args.Contains(" -R ", StringComparison.OrdinalIgnoreCase)
+           || args.StartsWith("-R ", StringComparison.OrdinalIgnoreCase);
+}
+
+static async Task<(int ExitCode, string Stdout, string Stderr)> RunGhAsync(string args, CancellationToken ct)
+{
+    var psi = new ProcessStartInfo("gh", args)
+    {
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+    };
+
+    using var process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start `gh`");
+    var stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
+    var stderrTask = process.StandardError.ReadToEndAsync(ct);
+
+    await process.WaitForExitAsync(ct);
+    var stdout = await stdoutTask;
+    var stderr = await stderrTask;
+
+    return (process.ExitCode, stdout, stderr);
 }
 
 static bool ContainsComplete(string output)
