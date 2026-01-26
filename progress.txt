@@ -385,3 +385,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Performance: single file read faster than git log parsing on each iteration
   - Separation of concerns: version control ≠ learning journal
   - Suggested hybrid approach: optional --include-git-history flag if needed
+
+---
+## 2026-01-26 - #29
+
+- Analyzed all 22 configuration flags and categorized them into essential (5), useful (4), and potentially overkill (10+)
+- Posted detailed analysis to issue with three cleanup options: conservative (remove 4), moderate (remove 8), aggressive (remove 10+)
+- Recommended Option 2 (moderate cleanup) to balance flexibility with simplicity
+- Files analyzed: src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, coralph.config.json
+- **Learnings:**
+  - Configuration sprawl happens gradually - periodic audits help identify rarely-used flags
+  - Grouping flags by use case (core vs debugging vs advanced) clarifies what can be removed
+  - Providing multiple cleanup options lets maintainers choose their comfort level
