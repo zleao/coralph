@@ -425,3 +425,13 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Self-contained single-file publish creates ~77MB executable but requires no .NET runtime
   - Workflow triggers on tags (v*) for releases and workflow_dispatch for manual testing
   - softprops/action-gh-release simplifies creating GitHub releases with artifacts
+
+---
+## 2026-01-26 - #33
+
+- Added `permissions: contents: write` to release workflow to fix 403 Forbidden error
+- Files changed: .github/workflows/release.yml
+- **Learnings:**
+  - GitHub Actions workflows need explicit permissions for GITHUB_TOKEN when creating releases
+  - The softprops/action-gh-release@v1 action requires write access to repository contents
+  - Adding permissions at workflow level (not job level) grants access to all jobs
