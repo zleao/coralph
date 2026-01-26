@@ -1,7 +1,7 @@
 {
   "LoopOptions": {
     "MaxIterations": 10,
-    "Model": "GPT-5.1-Codex",
+    "Model": "claude-sonnet-4.5",
     "PromptFile": "prompt.md",
     "ProgressFile": "progress.txt",
     "IssuesFile": "issues.json",
