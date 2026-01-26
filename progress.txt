@@ -268,3 +268,11 @@ Model: GPT-5.1-Codex
 - Files changed: .github/dependabot.yml, progress.txt
 - **Learnings:**
   - Dependabot allow lists can scope to a single dependency for targeted updates
+
+
+---
+# Iteration 1 (2026-01-26T12:11:16.2697460+00:00)
+
+Model: GPT-5.2-Codex
+
+Added Dependabot config for GitHub.Copilot.SDK with daily NuGet checks, ran build/tests, logged progress, committed, and closed #24.
