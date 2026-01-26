@@ -261,3 +261,10 @@ Model: GPT-5.1-Codex
 - Files changed: src/Coralph/ArgParser.cs, src/Coralph/LoopOptions.cs, src/Coralph/Program.cs, README.md, coralph.config.json
 - **Learnings:**
   - Keeping banner output behind a flag avoids changing default startup output.
+
+## 2026-01-26 - #24
+
+- Configured Dependabot to monitor GitHub.Copilot.SDK via daily NuGet checks
+- Files changed: .github/dependabot.yml, progress.txt
+- **Learnings:**
+  - Dependabot allow lists can scope to a single dependency for targeted updates
