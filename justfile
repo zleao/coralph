@@ -38,8 +38,9 @@ tag version:
         exit 1
     }
     git tag "{{version}}"
+    git push origin "{{version}}"
     Write-Host "✅ Created tag {{version}}" -ForegroundColor Green
-    Write-Host "Run 'git push origin {{version}}' to push the tag" -ForegroundColor Yellow
+    Write-Host "✅ Pushed tag {{version}}" -ForegroundColor Green
 
 # Publish local build with version from latest git tag (usage: just publish-local osx-arm64)
 publish-local rid:
