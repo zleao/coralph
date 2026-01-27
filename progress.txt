@@ -474,3 +474,13 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - The 404 error occurs when trying to upload an asset with a name that already exists in the release
   - Solution: Rename binaries to include platform identifier (coralph-linux-x64, coralph-win-x64.exe, etc.)
   - The mv commands flatten the artifact directory structure created by download-artifact@v4
+
+## 2026-01-27 - #36
+
+- Fixed artifact move command in release workflow to prevent "same file" error
+- Changed destination names from `coralph-*` to `Coralph-*` to avoid path conflicts
+- Files changed: .github/workflows/release.yml
+- **Learnings:**
+  - When `download-artifact@v4` creates directories named after artifacts, moving `./artifacts/name/File` to `./artifacts/name` creates a conflict
+  - Using a different destination name (Coralph vs coralph) ensures source and destination are always distinct
+  - This fix flattens the artifact directory structure while avoiding the "same file" error
