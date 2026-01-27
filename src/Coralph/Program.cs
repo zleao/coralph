@@ -73,10 +73,13 @@ for (var i = 1; i <= opt.MaxIterations; i++)
 {
     ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
 
-    // Reload progress before each iteration so assistant sees updates it made
+    // Reload progress and issues before each iteration so assistant sees updates it made
     progress = File.Exists(opt.ProgressFile)
         ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
         : string.Empty;
+    issues = File.Exists(opt.IssuesFile)
+        ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
+        : "[]";
 
     var combinedPrompt = BuildCombinedPrompt(promptTemplate, issues, progress);
 

@@ -103,6 +103,8 @@ done.
 # FINAL RULES
 
 - ONLY WORK ON A SINGLE TASK PER ITERATION
+- After completing one issue, DO NOT output COMPLETE - instead, the loop will
+  continue and you will work on the next open issue in the next iteration
 - Do NOT re-work already completed/closed issues
 - Do NOT make unnecessary commits (like updating progress.txt for work already
   logged)
@@ -114,6 +116,7 @@ done.
 - After making changes, summarize what you did and what remains.
 - Only output <promise>COMPLETE</promise> when ALL of these are true:
   1. You made changes in THIS iteration (not just reviewed code)
-  2. Every issue in ISSUES_JSON has been addressed
-  3. There is genuinely no remaining work
+  2. EVERY issue in ISSUES_JSON has been addressed (not just the current one)
+  3. There is genuinely no remaining work across ALL issues
+- If you completed one issue but others remain open, do NOT output COMPLETE
 - If unsure whether to output COMPLETE, do NOT output it - continue working.
