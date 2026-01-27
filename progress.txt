@@ -534,3 +534,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Anonymous types' ToString() doesn't serialize nested data - use JsonSerializer for test assertions
   - InternalsVisibleTo enables testing internal methods without exposing them publicly
   - Good test coverage helps document expected behavior and catch regressions
+
+## 2026-01-27 - #40
+
+- Added version display directly beneath the "Coralph" ASCII banner
+- Version sourced from AssemblyInformationalVersionAttribute, with fallback to assembly version
+- Both animated (DisplayAnimatedAsync) and static (Display) methods show version
+- Version displayed in dim styling for subtle appearance; plain text when output is redirected
+- Files changed: src/Coralph/Banner.cs
+- **Learnings:**
+  - AssemblyInformationalVersionAttribute preserves semantic version with prerelease tag
+  - Stripping build metadata suffix (+sha) keeps display clean
+  - InternalsVisibleTo means GetVersion can be tested separately if needed

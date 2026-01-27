@@ -1,9 +1,22 @@
+using System.Reflection;
 using Spectre.Console;
 
 namespace Coralph;
 
 internal static class Banner
 {
+    internal static string GetVersion()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var infoVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        if (!string.IsNullOrEmpty(infoVersion))
+        {
+            // Remove build metadata suffix (e.g., "+abc123") if present
+            var plusIndex = infoVersion.IndexOf('+');
+            return plusIndex >= 0 ? infoVersion[..plusIndex] : infoVersion;
+        }
+        return assembly.GetName().Version?.ToString() ?? "unknown";
+    }
     // ASCII art for "Coralph" - stylized and compact
     private static readonly string[] AsciiLines =
     [
@@ -34,6 +47,7 @@ internal static class Banner
             {
                 console.WriteLine(line);
             }
+            console.WriteLine($"v{GetVersion()}");
             return;
         }
 
@@ -56,6 +70,9 @@ internal static class Banner
                 break;
             }
         }
+        
+        // Display version after banner
+        console.MarkupLine($"[dim]v{GetVersion()}[/]");
     }
 
     internal static void Display(IAnsiConsole console)
@@ -66,6 +83,7 @@ internal static class Banner
             {
                 console.WriteLine(line);
             }
+            console.WriteLine($"v{GetVersion()}");
             return;
         }
 
@@ -77,5 +95,8 @@ internal static class Banner
             
             console.MarkupLine($"[rgb({color.R},{color.G},{color.B})]{Markup.Escape(line)}[/]");
         }
+        
+        // Display version after banner
+        console.MarkupLine($"[dim]v{GetVersion()}[/]");
     }
 }
