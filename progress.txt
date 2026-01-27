@@ -504,3 +504,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Spectre.Console RGB colors work well for gradient effects
   - Simple line-by-line delay creates effective animation without complexity
   - Checking Console.IsOutputRedirected ensures proper behavior in CI/piped contexts
+
+## 2026-01-27 - #37
+
+- Implemented semantic versioning for the executable
+- Added Version, AssemblyVersion, FileVersion properties to Coralph.csproj (default: 0.0.1-dev)
+- Updated release.yml to extract version from git tag (v1.2.3 → 1.2.3) and pass to dotnet publish
+- Added "Versioning and Releases" documentation section to README with release workflow
+- Files changed: src/Coralph/Coralph.csproj, .github/workflows/release.yml, README.md
+- **Learnings:**
+  - MSBuild /p:Version flag at publish time overrides .csproj defaults
+  - Version extraction from GITHUB_REF using bash parameter expansion works across platforms
+  - Default dev version (0.0.1-dev) makes local builds clearly distinguishable from releases

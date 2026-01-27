@@ -88,6 +88,37 @@ dotnet publish src/Coralph -c Release -r win-x64 --self-contained
 
 **Note**: Self-contained builds include the .NET runtime (~77MB), so users don't need .NET installed.
 
+## Versioning and Releases
+
+Coralph uses [Semantic Versioning](https://semver.org/) (SemVer).
+
+### How versioning works
+
+- **Development builds**: Default to `0.0.1-dev` when building locally
+- **Release builds**: Version is automatically extracted from git tags (e.g., `v1.2.3` → `1.2.3`)
+
+### Creating a release
+
+1. **Tag the release** with a semantic version:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+2. **GitHub Actions automatically**:
+   - Builds self-contained binaries for all platforms
+   - Creates a GitHub Release with the version from the tag
+   - Attaches platform-specific binaries to the release
+
+### Version in code
+
+The version is embedded in the assembly and can be accessed at runtime:
+```csharp
+var version = Assembly.GetExecutingAssembly()
+    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+    .InformationalVersion ?? "unknown";
+```
+
 Files used:
 - `prompt.md` (instructions)
 - `issues.json` (input; optional refresh via `gh`)
