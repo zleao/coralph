@@ -584,6 +584,19 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - PowerShell in justfile allows cross-platform scripts with proper error handling
   - Providing both manual override and automatic detection covers all user needs
 
+## 2026-01-28 - #45
+
+- Added devcontainer support with .devcontainer/devcontainer.json
+- Uses mcr.microsoft.com/devcontainers/dotnet:1-10.0 image for .NET 10
+- Includes GitHub CLI feature for gh commands
+- VS Code extensions: C#, C# Dev Kit, GitHub Copilot, EditorConfig, Prettier
+- postCreateCommand runs dotnet restore && dotnet build for ready-to-use environment
+- Files changed: .devcontainer/devcontainer.json (new)
+- **Learnings:**
+  - Microsoft's official dotnet devcontainer image includes all SDK tools
+  - No custom Dockerfile needed for standard .NET development
+  - Features like github-cli are added declaratively via ghcr.io/devcontainers/features
+
 ## 2026-01-29 - #47
 
 - Analyzed all NuGet dependencies in Coralph.csproj and Coralph.Tests.csproj
