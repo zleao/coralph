@@ -597,6 +597,21 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - No custom Dockerfile needed for standard .NET development
   - Features like github-cli are added declaratively via ghcr.io/devcontainers/features
 
+## 2026-01-29 - #46
+
+- Added structured logging with Serilog for improved observability
+- Created Logging.cs with configuration for JSON file output (daily rotation, 7 day retention)
+- Integrated logging into Program.cs main loop with contextual properties (Iteration, Model, Version)
+- Log events: startup, refresh issues, iteration start/complete, errors, COMPLETE detection, shutdown
+- Updated AGENTS.md with logging documentation and patterns
+- Added LoggingTests.cs with 2 tests (total now 86 tests)
+- Files changed: src/Coralph/Coralph.csproj (Serilog packages), src/Coralph/Logging.cs (new), src/Coralph/Program.cs, AGENTS.md, src/Coralph.Tests/LoggingTests.cs (new)
+- **Learnings:**
+  - Serilog's CompactJsonFormatter produces efficient one-line JSON logs for machine parsing
+  - LogContext.PushProperty scopes structured properties to specific code blocks
+  - Keeping console output via Spectre.Console while writing structured logs to file provides both human and machine readability
+  - Daily rolling logs with retention prevent unbounded disk growth
+
 ## 2026-01-29 - #47
 
 - Analyzed all NuGet dependencies in Coralph.csproj and Coralph.Tests.csproj

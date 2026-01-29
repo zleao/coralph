@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Text.Json;
 using Coralph;
 using Microsoft.Extensions.Configuration;
+using Serilog;
+using Serilog.Context;
 
 var (overrides, err, initialConfig, configFile, showHelp, showVersion) = ArgParser.Parse(args);
 
@@ -44,6 +46,10 @@ if (initialConfig)
 }
 
 var opt = LoadOptions(overrides, configFile);
+
+// Configure structured logging
+Logging.Configure(opt);
+Log.Information("Coralph starting with Model={Model}, MaxIterations={MaxIterations}", opt.Model, opt.MaxIterations);
 
 var ct = CancellationToken.None;
 
@@ -100,6 +106,7 @@ ConsoleOutput.WriteLine();
 
 if (opt.RefreshIssues)
 {
+    Log.Information("Refreshing issues from repository {Repo}", opt.Repo);
     ConsoleOutput.WriteLine("Refreshing issues...");
     var issuesJson = await GhIssues.FetchOpenIssuesJsonAsync(opt.Repo, ct);
     await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
@@ -128,45 +135,56 @@ if (!PromptHelpers.TryGetHasOpenIssues(issues, out var hasOpenIssues, out var is
 
 if (!hasOpenIssues)
 {
+    Log.Information("No open issues found, exiting");
     ConsoleOutput.WriteLine("NO_OPEN_ISSUES");
+    Logging.Close();
     return 0;
 }
 for (var i = 1; i <= opt.MaxIterations; i++)
 {
-    ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
-
-    // Reload progress and issues before each iteration so assistant sees updates it made
-    progress = File.Exists(opt.ProgressFile)
-        ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
-        : string.Empty;
-    issues = File.Exists(opt.IssuesFile)
-        ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
-        : "[]";
-
-    var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, prModeActive, prFeedbackByIssue);
-
-    string output;
-    try
+    using (LogContext.PushProperty("Iteration", i))
     {
-        output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct);
-    }
-    catch (Exception ex)
-    {
-        output = $"ERROR: {ex.GetType().Name}: {ex.Message}";
-        ConsoleOutput.WriteErrorLine(output);
-    }
+        Log.Information("Starting iteration {Iteration} of {MaxIterations}", i, opt.MaxIterations);
+        ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
 
-    // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
-    // The assistant writes clean, formatted summaries with learnings instead of raw output
+        // Reload progress and issues before each iteration so assistant sees updates it made
+        progress = File.Exists(opt.ProgressFile)
+            ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
+            : string.Empty;
+        issues = File.Exists(opt.IssuesFile)
+            ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
+            : "[]";
 
-    if (PromptHelpers.ContainsComplete(output))
-    {
-        ConsoleOutput.WriteLine("\nCOMPLETE detected, stopping.\n");
-        await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
-        break;
-    }
+        var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, prModeActive, prFeedbackByIssue);
+
+        string output;
+        try
+        {
+            output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct);
+            Log.Information("Iteration {Iteration} completed successfully", i);
+        }
+        catch (Exception ex)
+        {
+            output = $"ERROR: {ex.GetType().Name}: {ex.Message}";
+            Log.Error(ex, "Iteration {Iteration} failed with error", i);
+            ConsoleOutput.WriteErrorLine(output);
+        }
+
+        // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
+        // The assistant writes clean, formatted summaries with learnings instead of raw output
+
+        if (PromptHelpers.ContainsComplete(output))
+        {
+            Log.Information("COMPLETE detected at iteration {Iteration}, stopping loop", i);
+            ConsoleOutput.WriteLine("\nCOMPLETE detected, stopping.\n");
+            await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
+            break;
+        }
+    } // end LogContext scope
 }
 
+Log.Information("Coralph loop finished");
+Logging.Close();
 return 0;
 
 static async Task CommitProgressIfNeededAsync(string progressFile, CancellationToken ct)
