@@ -30,6 +30,7 @@ internal static class ArgParser
         var initialConfigOption = new Option<bool>("--initial-config", "Writes default config json and exits");
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
+        var prModeOption = new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never");
 
         root.AddOption(helpOption);
         root.AddOption(versionOption);
@@ -46,6 +47,7 @@ internal static class ArgParser
         root.AddOption(initialConfigOption);
         root.AddOption(showReasoningOption);
         root.AddOption(colorizedOutputOption);
+        root.AddOption(prModeOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -174,6 +176,23 @@ internal static class ArgParser
             }
         }
 
+        var prMode = result.GetValueForOption(prModeOption);
+        if (prMode is not null)
+        {
+            if (string.IsNullOrWhiteSpace(prMode))
+            {
+                errorMessages.Add("--pr-mode is required");
+            }
+            else if (Enum.TryParse<PrMode>(prMode, true, out var parsedMode))
+            {
+                options.PrMode = parsedMode;
+            }
+            else
+            {
+                errorMessages.Add("--pr-mode must be one of: Auto, Always, Never");
+            }
+        }
+
         if (result.Errors.Count > 0)
         {
             errorMessages.AddRange(result.Errors.Select(e => e.Message));
@@ -227,6 +246,7 @@ internal static class ArgParser
         root.AddOption(new Option<bool>("--initial-config", "Writes default config json and exits"));
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
         root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
+        root.AddOption(new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never"));
         return root;
     }
 }

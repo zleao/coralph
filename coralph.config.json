@@ -8,6 +8,7 @@
     "RefreshIssues": false,
     "Repo": null,
     "CliPath": null,
-    "CliUrl": null
+    "CliUrl": null,
+    "PrMode": "Auto"
   }
 }

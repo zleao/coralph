@@ -51,6 +51,41 @@ var ct = CancellationToken.None;
 await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
 ConsoleOutput.WriteLine();
 
+// Detect repository and determine PR mode
+bool prModeActive = false;
+string? repoOwner = null;
+string? repoName = null;
+
+if (opt.PrMode == PrMode.Always)
+{
+    prModeActive = true;
+    ConsoleOutput.WriteLine("PR Mode: Always (forced via config/flag)");
+}
+else if (opt.PrMode == PrMode.Never)
+{
+    prModeActive = false;
+    ConsoleOutput.WriteLine("PR Mode: Disabled (forced via config/flag)");
+}
+else // PrMode.Auto
+{
+    (repoOwner, repoName) = await GitPermissions.GetRepoFromGitRemoteAsync(ct);
+    
+    if (repoOwner is not null && repoName is not null)
+    {
+        var canPush = await GitPermissions.CanPushToMainAsync(repoOwner, repoName, ct);
+        prModeActive = !canPush;
+        ConsoleOutput.WriteLine($"PR Mode: {(prModeActive ? "Enabled" : "Disabled")} (auto-detected for {repoOwner}/{repoName})");
+    }
+    else
+    {
+        // No repo detected, default to direct push mode
+        prModeActive = false;
+        ConsoleOutput.WriteLine("PR Mode: Disabled (no GitHub repo detected)");
+    }
+}
+
+ConsoleOutput.WriteLine();
+
 if (opt.RefreshIssues)
 {
     ConsoleOutput.WriteLine("Refreshing issues...");
@@ -65,6 +100,13 @@ var issues = File.Exists(opt.IssuesFile)
 var progress = File.Exists(opt.ProgressFile)
     ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
     : string.Empty;
+
+// Fetch PR feedback if in PR mode
+Dictionary<int, PrFeedbackData> prFeedbackByIssue = new();
+if (prModeActive && repoOwner is not null && repoName is not null)
+{
+    prFeedbackByIssue = await FetchPrFeedbackForAllIssuesAsync(issues, repoOwner, repoName, ct);
+}
 
 if (!PromptHelpers.TryGetHasOpenIssues(issues, out var hasOpenIssues, out var issuesError))
 {
@@ -89,7 +131,7 @@ for (var i = 1; i <= opt.MaxIterations; i++)
         ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
         : "[]";
 
-    var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress);
+    var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, prModeActive, prFeedbackByIssue);
 
     string output;
     try
@@ -171,4 +213,48 @@ static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFil
     return options;
 }
 
+static async Task<Dictionary<int, PrFeedbackData>> FetchPrFeedbackForAllIssuesAsync(string issuesJson, string owner, string repo, CancellationToken ct)
+{
+    var result = new Dictionary<int, PrFeedbackData>();
+    
+    try
+    {
+        using var doc = JsonDocument.Parse(issuesJson);
+        if (doc.RootElement.ValueKind != JsonValueKind.Array)
+            return result;
+
+        foreach (var issue in doc.RootElement.EnumerateArray())
+        {
+            if (!issue.TryGetProperty("number", out var numberProp) || !numberProp.TryGetInt32(out var issueNumber))
+                continue;
+
+            // Check if issue is still open
+            if (issue.TryGetProperty("state", out var state) && state.ValueKind == JsonValueKind.String)
+            {
+                var stateValue = state.GetString();
+                if (string.Equals(stateValue, "closed", StringComparison.OrdinalIgnoreCase))
+                    continue;
+            }
+
+            // Find PRs for this issue
+            var prNumbers = await PrFeedback.FindOpenPrsForIssueAsync(issueNumber, owner, repo, ct);
+            if (prNumbers.Count == 0)
+                continue;
+
+            // Get feedback for the first open PR (usually there's only one)
+            var feedback = await PrFeedback.GetPrFeedbackAsync(issueNumber, prNumbers[0], owner, repo, ct);
+            if (feedback is not null)
+            {
+                result[issueNumber] = feedback;
+                ConsoleOutput.WriteLine($"Found PR feedback for issue #{issueNumber} (PR #{feedback.PrNumber})");
+            }
+        }
+    }
+    catch (JsonException)
+    {
+        // Ignore parse errors
+    }
+
+    return result;
+}
 

@@ -1,5 +1,12 @@
 namespace Coralph;
 
+internal enum PrMode
+{
+    Auto,
+    Always,
+    Never
+}
+
 internal sealed class LoopOptions
 {
     internal const string ConfigurationSectionName = "LoopOptions";
@@ -20,6 +27,7 @@ internal sealed class LoopOptions
 
     public bool ShowReasoning { get; set; } = true;
     public bool ColorizedOutput { get; set; } = true;
+    public PrMode PrMode { get; set; } = PrMode.Auto;
 }
 
 internal sealed class LoopOptionsOverrides
@@ -39,4 +47,5 @@ internal sealed class LoopOptionsOverrides
 
     public bool? ShowReasoning { get; set; }
     public bool? ColorizedOutput { get; set; }
+    public PrMode? PrMode { get; set; }
 }

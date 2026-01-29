@@ -8,7 +8,7 @@ namespace Coralph;
 /// </summary>
 internal static class PromptHelpers
 {
-    internal static string BuildCombinedPrompt(string promptTemplate, string issuesJson, string progress)
+    internal static string BuildCombinedPrompt(string promptTemplate, string issuesJson, string progress, bool prMode = false, Dictionary<int, PrFeedbackData>? prFeedback = null)
     {
         var sb = new StringBuilder();
 
@@ -16,11 +16,31 @@ internal static class PromptHelpers
         sb.AppendLine("Ignore any pre-existing uncommitted changes in the working tree - focus only on the issues listed below.");
         sb.AppendLine();
 
+        // Add PR mode indicator
+        if (prMode)
+        {
+            sb.AppendLine("# WORKFLOW MODE: PULL REQUEST");
+            sb.AppendLine("You are operating in PR mode. Do NOT push directly to main or close issues directly.");
+            sb.AppendLine("Follow the PR workflow instructions in the INSTRUCTIONS section below.");
+            sb.AppendLine();
+        }
+
         sb.AppendLine("# ISSUES_JSON");
         sb.AppendLine("```json");
         sb.AppendLine(issuesJson.Trim());
         sb.AppendLine("```");
         sb.AppendLine();
+
+        // Add PR feedback if present
+        if (prFeedback is not null && prFeedback.Count > 0)
+        {
+            sb.AppendLine("# PR_FEEDBACK");
+            sb.AppendLine("The following issues have open PRs with review feedback that needs to be addressed:");
+            sb.AppendLine("```json");
+            sb.AppendLine(JsonSerializer.Serialize(prFeedback.Values, new JsonSerializerOptions { WriteIndented = true }));
+            sb.AppendLine("```");
+            sb.AppendLine();
+        }
 
         sb.AppendLine("# PROGRESS_SO_FAR");
         sb.AppendLine("```text");
@@ -102,5 +122,6 @@ internal static class PromptHelpers
         if (!string.IsNullOrWhiteSpace(overrides.CliUrl)) target.CliUrl = overrides.CliUrl;
         if (overrides.ShowReasoning is { } showReasoning) target.ShowReasoning = showReasoning;
         if (overrides.ColorizedOutput is { } colorizedOutput) target.ColorizedOutput = colorizedOutput;
+        if (overrides.PrMode is { } prMode) target.PrMode = prMode;
     }
 }

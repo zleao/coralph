@@ -115,6 +115,26 @@ dotnet run --project src/Coralph -- --max-iterations 5 --show-reasoning false
 
 ## Features
 
+### PR Workflow Mode
+Coralph automatically adapts to repositories with branch protection:
+- **Auto-detection**: Checks push permissions at startup via `gh api`
+- **Feature branches**: Creates `coralph/issue-{number}` branches for each issue
+- **PR creation**: Uses `gh pr create --fill --body "Fixes #{number}"` to link PRs to issues
+- **PR feedback handling**: Detects `@coralph` mentions and unresolved review comments, then addresses them
+- **Manual override**: Use `--pr-mode Always|Never|Auto` (default: Auto) or set in config
+
+Example workflow in PR mode:
+```bash
+# Auto-detect (checks if you can push to main)
+dotnet run --project src/Coralph -- --max-iterations 10
+
+# Force PR mode (useful for team policies)
+dotnet run --project src/Coralph -- --max-iterations 10 --pr-mode Always
+
+# Disable PR mode (direct push to main)
+dotnet run --project src/Coralph -- --max-iterations 10 --pr-mode Never
+```
+
 ### Streaming Output Improvements
 
 - **Visual styling**: Color-coded output for reasoning (cyan), assistant text
