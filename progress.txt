@@ -583,3 +583,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - `git describe --tags --abbrev=0` reliably gets the latest tag for version extraction
   - PowerShell in justfile allows cross-platform scripts with proper error handling
   - Providing both manual override and automatic detection covers all user needs
+
+## 2026-01-29 - #47
+
+- Analyzed all NuGet dependencies in Coralph.csproj and Coralph.Tests.csproj
+- Found 1 unused dependency: coverlet.collector (no coverage collection configured)
+- All main project dependencies (4) are actively used
+- Removed coverlet.collector from test project
+- Files changed: src/Coralph.Tests/Coralph.Tests.csproj
+- **Learnings:**
+  - `dotnet list package` provides quick visibility into top-level and auto-referenced packages
+  - grep for `using` statements is effective for verifying package usage in .NET
+  - coverlet.collector is often added by default templates but unused without explicit coverage config
