@@ -106,4 +106,40 @@ public class GitPermissionsTests
     }
 
     #endregion
+
+    #region IsUserInBypassList Tests
+
+    [Fact]
+    public void IsUserInBypassList_WithMatchingLogin_ReturnsTrue()
+    {
+        var result = GitPermissions.IsUserInBypassList("dariuszparys", ["dariuszparys"]);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsUserInBypassList_WithDifferentLogin_ReturnsFalse()
+    {
+        var result = GitPermissions.IsUserInBypassList("dariuszparys", ["someoneelse"]);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsUserInBypassList_WithNullLogin_ReturnsFalse()
+    {
+        var result = GitPermissions.IsUserInBypassList(null, ["dariuszparys"]);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsUserInBypassList_WithCaseInsensitiveMatch_ReturnsTrue()
+    {
+        var result = GitPermissions.IsUserInBypassList("DARIUSZPARYS", ["dariuszparys"]);
+
+        Assert.True(result);
+    }
+
+    #endregion
 }

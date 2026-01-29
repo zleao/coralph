@@ -74,7 +74,19 @@ else // PrMode.Auto
     {
         var canPush = await GitPermissions.CanPushToMainAsync(repoOwner, repoName, ct);
         prModeActive = !canPush;
-        ConsoleOutput.WriteLine($"PR Mode: {(prModeActive ? "Enabled" : "Disabled")} (auto-detected for {repoOwner}/{repoName})");
+        var reason = $"auto-detected for {repoOwner}/{repoName}";
+
+        if (prModeActive && opt.PrModeBypassUsers.Count > 0)
+        {
+            var login = await GitPermissions.GetCurrentUserLoginAsync(ct);
+            if (GitPermissions.IsUserInBypassList(login, opt.PrModeBypassUsers))
+            {
+                prModeActive = false;
+                reason = $"bypass user {login}";
+            }
+        }
+
+        ConsoleOutput.WriteLine($"PR Mode: {(prModeActive ? "Enabled" : "Disabled")} ({reason})");
     }
     else
     {

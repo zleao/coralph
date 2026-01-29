@@ -293,6 +293,17 @@ public class PromptHelpersTests
     }
 
     [Fact]
+    public void ApplyOverrides_WithPrModeBypassUsers_OverridesValue()
+    {
+        var options = new LoopOptions { PrModeBypassUsers = new List<string> { "existing" } };
+        var overrides = new LoopOptionsOverrides { PrModeBypassUsers = new List<string> { "dariuszparys" } };
+
+        PromptHelpers.ApplyOverrides(options, overrides);
+
+        Assert.Equal(["dariuszparys"], options.PrModeBypassUsers);
+    }
+
+    [Fact]
     public void ApplyOverrides_WithAllValues_OverridesAll()
     {
         var options = new LoopOptions();
@@ -308,7 +319,8 @@ public class PromptHelpersTests
             CliPath = "/path/to/cli",
             CliUrl = "http://localhost:8080",
             ShowReasoning = false,
-            ColorizedOutput = false
+            ColorizedOutput = false,
+            PrModeBypassUsers = new List<string> { "dariuszparys" }
         };
 
         PromptHelpers.ApplyOverrides(options, overrides);
@@ -324,6 +336,7 @@ public class PromptHelpersTests
         Assert.Equal("http://localhost:8080", options.CliUrl);
         Assert.False(options.ShowReasoning);
         Assert.False(options.ColorizedOutput);
+        Assert.Equal(["dariuszparys"], options.PrModeBypassUsers);
     }
 
     #endregion

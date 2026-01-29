@@ -123,5 +123,6 @@ internal static class PromptHelpers
         if (overrides.ShowReasoning is { } showReasoning) target.ShowReasoning = showReasoning;
         if (overrides.ColorizedOutput is { } colorizedOutput) target.ColorizedOutput = colorizedOutput;
         if (overrides.PrMode is { } prMode) target.PrMode = prMode;
+        if (overrides.PrModeBypassUsers is { } bypassUsers) target.PrModeBypassUsers = new List<string>(bypassUsers);
     }
 }

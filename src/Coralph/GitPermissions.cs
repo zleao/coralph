@@ -43,6 +43,37 @@ internal static class GitPermissions
         }
     }
 
+    internal static async Task<string?> GetCurrentUserLoginAsync(CancellationToken ct)
+    {
+        try
+        {
+            var result = await RunGhApiAsync("user", ct, "--jq", ".login");
+            var login = result.Trim();
+            return string.IsNullOrWhiteSpace(login) ? null : login;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    internal static bool IsUserInBypassList(string? login, IEnumerable<string>? bypassUsers)
+    {
+        if (string.IsNullOrWhiteSpace(login) || bypassUsers is null)
+            return false;
+
+        foreach (var user in bypassUsers)
+        {
+            if (string.IsNullOrWhiteSpace(user))
+                continue;
+
+            if (string.Equals(user.Trim(), login, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
     private static async Task<string> RunGitAsync(string arguments, CancellationToken ct)
     {
         var psi = new ProcessStartInfo("git", arguments)

@@ -28,6 +28,7 @@ internal sealed class LoopOptions
     public bool ShowReasoning { get; set; } = true;
     public bool ColorizedOutput { get; set; } = true;
     public PrMode PrMode { get; set; } = PrMode.Auto;
+    public List<string> PrModeBypassUsers { get; set; } = new();
 }
 
 internal sealed class LoopOptionsOverrides
@@ -48,4 +49,5 @@ internal sealed class LoopOptionsOverrides
     public bool? ShowReasoning { get; set; }
     public bool? ColorizedOutput { get; set; }
     public PrMode? PrMode { get; set; }
+    public List<string>? PrModeBypassUsers { get; set; }
 }

@@ -9,6 +9,9 @@
     "Repo": null,
     "CliPath": null,
     "CliUrl": null,
-    "PrMode": "Auto"
+    "PrMode": "Auto",
+    "PrModeBypassUsers": [
+      "dariuszparys"
+    ]
   }
 }
