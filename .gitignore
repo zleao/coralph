@@ -59,6 +59,7 @@ node_modules/
 issues.json
 !progress.txt
 *.tmp
+.coralph-combined*
 events.jsonl
 coralph.log
 *.jsonl

@@ -160,6 +160,7 @@ internal static class PromptHelpers
         if (!string.IsNullOrWhiteSpace(overrides.CliPath)) target.CliPath = overrides.CliPath;
         if (!string.IsNullOrWhiteSpace(overrides.CliUrl)) target.CliUrl = overrides.CliUrl;
         if (!string.IsNullOrWhiteSpace(overrides.CopilotConfigPath)) target.CopilotConfigPath = overrides.CopilotConfigPath;
+        if (!string.IsNullOrWhiteSpace(overrides.CopilotToken)) target.CopilotToken = overrides.CopilotToken;
         if (overrides.ShowReasoning is { } showReasoning) target.ShowReasoning = showReasoning;
         if (overrides.ColorizedOutput is { } colorizedOutput) target.ColorizedOutput = colorizedOutput;
         if (overrides.StreamEvents is { } streamEvents) target.StreamEvents = streamEvents;

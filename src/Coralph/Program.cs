@@ -90,6 +90,7 @@ finally
 static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
 {
     var ct = CancellationToken.None;
+    var emittedCopilotDiagnostics = false;
 
     var inDockerSandbox = string.Equals(Environment.GetEnvironmentVariable(DockerSandbox.SandboxFlagEnv), "1", StringComparison.Ordinal);
     var combinedPromptFile = Environment.GetEnvironmentVariable(DockerSandbox.CombinedPromptEnv);
@@ -134,6 +135,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                 return 1;
             }
             opt.CopilotConfigPath = fullConfigPath;
+            TryEnsureCopilotCacheDirectory(fullConfigPath);
         }
     }
 
@@ -160,6 +162,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
         }
         catch (Exception ex)
         {
+            emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
             Log.Error(ex, "Docker sandbox iteration failed");
             ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
             return 1;
@@ -293,6 +296,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                 output = $"ERROR: {turnError}";
                 Log.Error(ex, "Iteration {Iteration} failed with error", i);
                 ConsoleOutput.WriteErrorLine(output);
+                emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
             }
 
             // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
@@ -357,6 +361,46 @@ static async Task<string> RunGitAsync(string arguments, CancellationToken ct)
     return output.Trim();
 }
 
+static async Task<bool> TryEmitCopilotDiagnosticsAsync(Exception ex, LoopOptions opt, CancellationToken ct, bool alreadyEmitted)
+{
+    if (alreadyEmitted || ct.IsCancellationRequested)
+    {
+        return alreadyEmitted;
+    }
+
+    if (!CopilotDiagnostics.IsCopilotCliDisconnect(ex))
+    {
+        return alreadyEmitted;
+    }
+
+    try
+    {
+        var diagnostics = await CopilotDiagnostics.CollectAsync(opt, ct);
+        if (!string.IsNullOrWhiteSpace(diagnostics))
+        {
+            ConsoleOutput.WriteErrorLine();
+            ConsoleOutput.WriteErrorLine(diagnostics);
+        }
+
+        var hints = CopilotDiagnostics.GetHints(opt);
+        if (hints.Count > 0)
+        {
+            ConsoleOutput.WriteErrorLine();
+            ConsoleOutput.WriteErrorLine("Copilot CLI troubleshooting:");
+            foreach (var hint in hints)
+            {
+                ConsoleOutput.WriteErrorLine($"- {hint}");
+            }
+        }
+    }
+    catch (Exception diagEx)
+    {
+        Log.Warning(diagEx, "Failed to emit Copilot CLI diagnostics");
+    }
+
+    return true;
+}
+
 static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFile)
 {
     var path = ResolveConfigPath(configFile);
@@ -381,11 +425,16 @@ static string ResolveConfigPath(string? configFile)
     if (Path.IsPathRooted(path))
         return path;
 
-    var basePath = configFile is null
-        ? AppContext.BaseDirectory
-        : Directory.GetCurrentDirectory();
+    if (configFile is null)
+    {
+        var cwdPath = Path.Combine(Directory.GetCurrentDirectory(), path);
+        if (File.Exists(cwdPath))
+            return cwdPath;
 
-    return Path.Combine(basePath, path);
+        return Path.Combine(AppContext.BaseDirectory, path);
+    }
+
+    return Path.Combine(Directory.GetCurrentDirectory(), path);
 }
 
 static string ExpandHomePath(string path)
@@ -406,6 +455,19 @@ static string ExpandHomePath(string path)
     }
 
     return path;
+}
+
+static void TryEnsureCopilotCacheDirectory(string configPath)
+{
+    try
+    {
+        var pkgPath = Path.Combine(configPath, "pkg");
+        Directory.CreateDirectory(pkgPath);
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Failed to ensure Copilot cache directory under {Path}", configPath);
+    }
 }
 
 static async Task<Dictionary<int, PrFeedbackData>> FetchPrFeedbackForAllIssuesAsync(string issuesJson, string owner, string repo, CancellationToken ct)

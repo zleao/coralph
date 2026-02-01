@@ -1,5 +1,6 @@
 using System.Text;
 using System.Linq;
+using Serilog;
 using GitHub.Copilot.SDK;
 
 namespace Coralph;
@@ -15,138 +16,143 @@ internal static class CopilotRunner
 
         if (!string.IsNullOrWhiteSpace(opt.CliPath)) clientOptions.CliPath = opt.CliPath;
         if (!string.IsNullOrWhiteSpace(opt.CliUrl)) clientOptions.CliUrl = opt.CliUrl;
+        if (!string.IsNullOrWhiteSpace(opt.CopilotToken)) clientOptions.GithubToken = opt.CopilotToken;
 
         await using var client = new CopilotClient(clientOptions);
-        await client.StartAsync();
-
-        var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile);
-
+        var started = false;
         string result;
-        await using (var session = await client.CreateSessionAsync(new SessionConfig
+        try
         {
-            Model = opt.Model,
-            Streaming = true,
-            Tools = customTools,
-            OnPermissionRequest = (request, invocation) =>
-                Task.FromResult(new PermissionRequestResult { Kind = "approved" }),
-        }))
-        {
-            var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var output = new StringBuilder();
+            await client.StartAsync();
+            started = true;
 
-            string? lastToolName = null;
-            bool inReasoningMode = false;
-            bool inAssistantMode = false;
-            string? activeAssistantMessageId = null;
-            string? activeReasoningId = null;
-            var syntheticMessageCounter = 0;
-            var syntheticReasoningCounter = 0;
-            var startedAssistantMessages = new HashSet<string>(StringComparer.Ordinal);
-            var startedReasoningMessages = new HashSet<string>(StringComparer.Ordinal);
-            var toolNamesByCallId = new Dictionary<string, string>(StringComparer.Ordinal);
-            var toolParentByCallId = new Dictionary<string, string?>(StringComparer.Ordinal);
-            string? copilotSessionId = null;
+            var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile);
 
-            void Emit(string type, int? eventTurn = null, string? messageId = null, string? toolCallId = null, IDictionary<string, object?>? fields = null)
+            await using (var session = await client.CreateSessionAsync(new SessionConfig
             {
-                eventStream?.Emit(type, eventTurn ?? turn, messageId, toolCallId, fields);
-            }
-
-            string ResolveAssistantMessageId(string? messageId)
+                Model = opt.Model,
+                Streaming = true,
+                Tools = customTools,
+                OnPermissionRequest = (request, invocation) =>
+                    Task.FromResult(new PermissionRequestResult { Kind = "approved" }),
+            }))
             {
-                if (!string.IsNullOrWhiteSpace(messageId))
+                var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var output = new StringBuilder();
+
+                string? lastToolName = null;
+                bool inReasoningMode = false;
+                bool inAssistantMode = false;
+                string? activeAssistantMessageId = null;
+                string? activeReasoningId = null;
+                var syntheticMessageCounter = 0;
+                var syntheticReasoningCounter = 0;
+                var startedAssistantMessages = new HashSet<string>(StringComparer.Ordinal);
+                var startedReasoningMessages = new HashSet<string>(StringComparer.Ordinal);
+                var toolNamesByCallId = new Dictionary<string, string>(StringComparer.Ordinal);
+                var toolParentByCallId = new Dictionary<string, string?>(StringComparer.Ordinal);
+                string? copilotSessionId = null;
+
+                void Emit(string type, int? eventTurn = null, string? messageId = null, string? toolCallId = null, IDictionary<string, object?>? fields = null)
                 {
-                    activeAssistantMessageId = messageId;
-                    return messageId;
+                    eventStream?.Emit(type, eventTurn ?? turn, messageId, toolCallId, fields);
                 }
 
-                if (!string.IsNullOrWhiteSpace(activeAssistantMessageId))
+                string ResolveAssistantMessageId(string? messageId)
                 {
+                    if (!string.IsNullOrWhiteSpace(messageId))
+                    {
+                        activeAssistantMessageId = messageId;
+                        return messageId;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(activeAssistantMessageId))
+                    {
+                        return activeAssistantMessageId;
+                    }
+
+                    activeAssistantMessageId = $"assistant-{++syntheticMessageCounter}";
                     return activeAssistantMessageId;
                 }
 
-                activeAssistantMessageId = $"assistant-{++syntheticMessageCounter}";
-                return activeAssistantMessageId;
-            }
-
-            string ResolveReasoningId(string? reasoningId)
-            {
-                if (!string.IsNullOrWhiteSpace(reasoningId))
+                string ResolveReasoningId(string? reasoningId)
                 {
-                    activeReasoningId = reasoningId;
-                    return reasoningId;
-                }
+                    if (!string.IsNullOrWhiteSpace(reasoningId))
+                    {
+                        activeReasoningId = reasoningId;
+                        return reasoningId;
+                    }
 
-                if (!string.IsNullOrWhiteSpace(activeReasoningId))
-                {
+                    if (!string.IsNullOrWhiteSpace(activeReasoningId))
+                    {
+                        return activeReasoningId;
+                    }
+
+                    activeReasoningId = $"reasoning-{++syntheticReasoningCounter}";
                     return activeReasoningId;
                 }
 
-                activeReasoningId = $"reasoning-{++syntheticReasoningCounter}";
-                return activeReasoningId;
-            }
-
-            void EnsureAssistantMessageStart(string messageId, string? parentToolCallId)
-            {
-                if (!startedAssistantMessages.Add(messageId))
+                void EnsureAssistantMessageStart(string messageId, string? parentToolCallId)
                 {
-                    return;
-                }
-
-                Emit("message_start", messageId: messageId, fields: new Dictionary<string, object?>
-                {
-                    ["message"] = new Dictionary<string, object?>
+                    if (!startedAssistantMessages.Add(messageId))
                     {
-                        ["id"] = messageId,
-                        ["role"] = "assistant",
-                        ["parentToolCallId"] = parentToolCallId
+                        return;
                     }
-                });
-            }
 
-            void EnsureReasoningMessageStart(string reasoningId)
-            {
-                if (!startedReasoningMessages.Add(reasoningId))
-                {
-                    return;
-                }
-
-                Emit("message_start", messageId: reasoningId, fields: new Dictionary<string, object?>
-                {
-                    ["message"] = new Dictionary<string, object?>
+                    Emit("message_start", messageId: messageId, fields: new Dictionary<string, object?>
                     {
-                        ["id"] = reasoningId,
-                        ["role"] = "reasoning"
-                    }
-                });
-            }
-
-            static List<Dictionary<string, object?>>? MapToolRequests(AssistantMessageDataToolRequestsItem[]? requests)
-            {
-                if (requests is null || requests.Length == 0)
-                {
-                    return null;
-                }
-
-                var result = new List<Dictionary<string, object?>>();
-                foreach (var request in requests)
-                {
-                    result.Add(new Dictionary<string, object?>
-                    {
-                        ["toolCallId"] = request.ToolCallId,
-                        ["name"] = request.Name,
-                        ["type"] = request.Type?.ToString(),
-                        ["arguments"] = request.Arguments
+                        ["message"] = new Dictionary<string, object?>
+                        {
+                            ["id"] = messageId,
+                            ["role"] = "assistant",
+                            ["parentToolCallId"] = parentToolCallId
+                        }
                     });
                 }
 
-                return result;
-            }
-
-            using var sub = session.On(evt =>
-            {
-                switch (evt)
+                void EnsureReasoningMessageStart(string reasoningId)
                 {
+                    if (!startedReasoningMessages.Add(reasoningId))
+                    {
+                        return;
+                    }
+
+                    Emit("message_start", messageId: reasoningId, fields: new Dictionary<string, object?>
+                    {
+                        ["message"] = new Dictionary<string, object?>
+                        {
+                            ["id"] = reasoningId,
+                            ["role"] = "reasoning"
+                        }
+                    });
+                }
+
+                static List<Dictionary<string, object?>>? MapToolRequests(AssistantMessageDataToolRequestsItem[]? requests)
+                {
+                    if (requests is null || requests.Length == 0)
+                    {
+                        return null;
+                    }
+
+                    var result = new List<Dictionary<string, object?>>();
+                    foreach (var request in requests)
+                    {
+                        result.Add(new Dictionary<string, object?>
+                        {
+                            ["toolCallId"] = request.ToolCallId,
+                            ["name"] = request.Name,
+                            ["type"] = request.Type?.ToString(),
+                            ["arguments"] = request.Arguments
+                        });
+                    }
+
+                    return result;
+                }
+
+                using var sub = session.On(evt =>
+                {
+                    switch (evt)
+                    {
                     case SessionStartEvent sessionStart:
                         copilotSessionId = sessionStart.Data.SessionId;
                         Emit("copilot_session_start", fields: new Dictionary<string, object?>
@@ -424,20 +430,34 @@ internal static class CopilotRunner
                         });
                         done.TrySetResult();
                         break;
+                    }
+                });
+
+                await session.SendAsync(new MessageOptions { Prompt = prompt });
+
+                using (ct.Register(() => done.TrySetCanceled(ct)))
+                {
+                    await done.Task;
                 }
-            });
 
-            await session.SendAsync(new MessageOptions { Prompt = prompt });
-
-            using (ct.Register(() => done.TrySetCanceled(ct)))
-            {
-                await done.Task;
+                result = output.ToString().Trim();
             }
-
-            result = output.ToString().Trim();
+        }
+        finally
+        {
+            if (started)
+            {
+                try
+                {
+                    await client.StopAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to stop Copilot client");
+                }
+            }
         }
 
-        await client.StopAsync();
         return result;
     }
 

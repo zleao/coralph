@@ -120,6 +120,16 @@ dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --d
 # reuse host Copilot CLI auth inside the sandbox
 dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --copilot-config-path ~/.copilot
 
+# non-interactive auth (recommended for CI / headless)
+# requires a fine-grained PAT with "Copilot Requests" permission (classic PATs won't work)
+# create one at:
+# https://github.com/settings/personal-access-tokens
+export GH_TOKEN=ghp_your_fine_grained_pat
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image coralph-dotnet-copilot:10.0
+
+# or pass the token explicitly (sets GH_TOKEN inside the sandbox)
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image coralph-dotnet-copilot:10.0 --copilot-token ghp_your_fine_grained_pat
+
 # build a custom image with Copilot CLI preinstalled
 docker build -f Dockerfile.copilot -t coralph-dotnet-copilot:10.0 .
 

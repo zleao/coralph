@@ -73,14 +73,13 @@ internal static class DockerSandbox
         try
         {
             var launchInfo = ResolveLaunchInfo(repoRoot);
-            var args = BuildDockerRunArguments(opt, repoRoot, combinedPromptPath, prModeActive, launchInfo);
-            var result = await RunDockerAsync(args, ct);
-            WriteDockerOutput(result.Output, result.Error);
-            var output = CombineOutput(result.Output, result.Error);
-            if (result.ExitCode != 0)
-            {
-                var error = string.IsNullOrWhiteSpace(result.Error) ? "Docker sandbox failed." : result.Error.Trim();
-                throw new InvalidOperationException(error);
+        var args = BuildDockerRunArguments(opt, repoRoot, combinedPromptPath, prModeActive, launchInfo);
+        var result = await RunDockerAsync(args, ct, streamOutput: true);
+        var output = CombineOutput(result.Output, result.Error);
+        if (result.ExitCode != 0)
+        {
+            var error = string.IsNullOrWhiteSpace(result.Error) ? "Docker sandbox failed." : result.Error.Trim();
+            throw new InvalidOperationException(error);
             }
 
             return output;
@@ -153,6 +152,7 @@ internal static class DockerSandbox
         output.Append("DOTNET_ROLL_FORWARD_TO_PRERELEASE=1");
         output.Append(" -e ");
         output.Append(Quote($"{CombinedPromptEnv}={combinedPromptContainerPath}"));
+        AddCopilotTokenEnvironment(output, opt);
 
         output.Append(' ');
         output.Append(Quote(opt.DockerImage));
@@ -204,7 +204,7 @@ internal static class DockerSandbox
         return output.ToString();
     }
 
-    private static async Task<(int ExitCode, string Output, string Error)> RunDockerAsync(string arguments, CancellationToken ct)
+    private static async Task<(int ExitCode, string Output, string Error)> RunDockerAsync(string arguments, CancellationToken ct, bool streamOutput = false)
     {
         var psi = new ProcessStartInfo("docker", arguments)
         {
@@ -218,14 +218,34 @@ internal static class DockerSandbox
         if (process is null)
             return (-1, string.Empty, "Failed to start Docker.");
 
-        var stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
-        var stderrTask = process.StandardError.ReadToEndAsync(ct);
+        var stdout = new StringBuilder();
+        var stderr = new StringBuilder();
+
+        var stdoutTask = ReadProcessStreamAsync(process.StandardOutput, stdout, streamOutput ? ConsoleOutput.Write : null, ct);
+        var stderrTask = ReadProcessStreamAsync(process.StandardError, stderr, streamOutput ? ConsoleOutput.WriteError : null, ct);
 
         await process.WaitForExitAsync(ct);
-        var stdout = await stdoutTask;
-        var stderr = await stderrTask;
+        await Task.WhenAll(stdoutTask, stderrTask);
 
-        return (process.ExitCode, stdout, stderr);
+        return (process.ExitCode, stdout.ToString(), stderr.ToString());
+    }
+
+    private static async Task ReadProcessStreamAsync(StreamReader reader, StringBuilder buffer, Action<string>? write, CancellationToken ct)
+    {
+        var chunk = new char[4096];
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+            var read = await reader.ReadAsync(chunk.AsMemory(0, chunk.Length), ct);
+            if (read == 0)
+            {
+                break;
+            }
+
+            var text = new string(chunk, 0, read);
+            buffer.Append(text);
+            write?.Invoke(text);
+        }
     }
 
     private static string MapPathToContainer(string repoRoot, string hostPath, string description, List<DockerMount> mounts, bool allowOutsideRepo, bool readOnly)
@@ -322,11 +342,11 @@ internal static class DockerSandbox
             throw new InvalidOperationException($"Copilot config directory not found: {fullPath}");
         }
 
-        AddMountIfMissing(mounts, fullPath, "/home/vscode/.copilot");
-        AddMountIfMissing(mounts, fullPath, "/root/.copilot");
+        AddMountIfMissing(mounts, fullPath, "/home/vscode/.copilot", readOnly: false);
+        AddMountIfMissing(mounts, fullPath, "/root/.copilot", readOnly: false);
     }
 
-    private static void AddMountIfMissing(List<DockerMount> mounts, string hostPath, string containerPath)
+    private static void AddMountIfMissing(List<DockerMount> mounts, string hostPath, string containerPath, bool readOnly)
     {
         foreach (var mount in mounts)
         {
@@ -337,7 +357,7 @@ internal static class DockerSandbox
             }
         }
 
-        mounts.Add(new DockerMount(hostPath, containerPath, readOnly: true));
+        mounts.Add(new DockerMount(hostPath, containerPath, readOnly));
     }
 
     private static string CombineOutput(string stdout, string stderr)
@@ -355,18 +375,6 @@ internal static class DockerSandbox
         return $"{stdout}{Environment.NewLine}{stderr}";
     }
 
-    private static void WriteDockerOutput(string stdout, string stderr)
-    {
-        if (!string.IsNullOrEmpty(stdout))
-        {
-            ConsoleOutput.Write(stdout);
-        }
-
-        if (!string.IsNullOrEmpty(stderr))
-        {
-            ConsoleOutput.WriteError(stderr);
-        }
-    }
 
     private static string? ResolveManagedAssembly(string? location)
     {
@@ -420,5 +428,33 @@ internal static class DockerSandbox
         var mounts = new List<DockerMount>();
         var containerPath = MapPathToContainer(repoRoot, binaryPath, "Coralph executable", mounts, allowOutsideRepo: true, readOnly: true);
         return new DockerLaunchInfo(containerPath, new List<string>(), mounts);
+    }
+
+    private static void AddCopilotTokenEnvironment(StringBuilder output, LoopOptions opt)
+    {
+        if (!string.IsNullOrWhiteSpace(opt.CopilotToken))
+        {
+            AddDockerEnv(output, "GH_TOKEN", opt.CopilotToken);
+            return;
+        }
+
+        var ghToken = Environment.GetEnvironmentVariable("GH_TOKEN");
+        var githubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+
+        if (!string.IsNullOrWhiteSpace(ghToken))
+        {
+            AddDockerEnv(output, "GH_TOKEN", ghToken);
+        }
+
+        if (!string.IsNullOrWhiteSpace(githubToken))
+        {
+            AddDockerEnv(output, "GITHUB_TOKEN", githubToken);
+        }
+    }
+
+    private static void AddDockerEnv(StringBuilder output, string name, string value)
+    {
+        output.Append(" -e ");
+        output.Append(Quote($"{name}={value}"));
     }
 }

@@ -27,6 +27,7 @@ internal static class ArgParser
         var cliPathOption = new Option<string?>("--cli-path", "Optional: Copilot CLI executable path");
         var cliUrlOption = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
         var copilotConfigPathOption = new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox");
+        var copilotTokenOption = new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)");
         var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
         var initialConfigOption = new Option<bool>("--initial-config", "Writes default config json and exits");
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
@@ -48,6 +49,7 @@ internal static class ArgParser
         root.AddOption(cliPathOption);
         root.AddOption(cliUrlOption);
         root.AddOption(copilotConfigPathOption);
+        root.AddOption(copilotTokenOption);
         root.AddOption(configOption);
         root.AddOption(initialConfigOption);
         root.AddOption(showReasoningOption);
@@ -203,6 +205,19 @@ internal static class ArgParser
             }
         }
 
+        var copilotToken = result.GetValueForOption(copilotTokenOption);
+        if (copilotToken is not null)
+        {
+            if (string.IsNullOrWhiteSpace(copilotToken))
+            {
+                errorMessages.Add("--copilot-token is required");
+            }
+            else
+            {
+                options.CopilotToken = copilotToken;
+            }
+        }
+
         var prMode = result.GetValueForOption(prModeOption);
         if (prMode is not null)
         {
@@ -289,6 +304,7 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--cli-path", "Optional: Copilot CLI executable path"));
         root.AddOption(new Option<string?>("--cli-url", "Optional: connect to existing CLI server"));
         root.AddOption(new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox"));
+        root.AddOption(new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)"));
         root.AddOption(new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)"));
         root.AddOption(new Option<bool>("--initial-config", "Writes default config json and exits"));
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
