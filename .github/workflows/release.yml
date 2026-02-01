@@ -71,6 +71,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Generate release notes from changelog
+      run: |
+        TAG="${GITHUB_REF#refs/tags/}"
+        VERSION="${TAG#v}"
+        ANCHOR="v${VERSION//./-}"
+        CHANGELOG_URL="https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md#${ANCHOR}"
+        awk -v version="$VERSION" '
+          $0 == "## [" version "]" { in_section=1; print; next }
+          in_section && $0 ~ "^## \\[" { exit }
+          in_section { print }
+        ' CHANGELOG.md > release-notes.md
+        if [[ ! -s release-notes.md ]]; then
+          echo "Missing changelog entry for $VERSION."
+          exit 1
+        fi
+        printf "\n[Full changelog](%s)\n" "$CHANGELOG_URL" >> release-notes.md
+      shell: bash
+    
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
@@ -91,6 +109,7 @@ jobs:
           ./artifacts/Coralph-win-x64.exe
           ./artifacts/Coralph-osx-x64
           ./artifacts/Coralph-osx-arm64
+        body_path: ./release-notes.md
         draft: false
         prerelease: false
         generate_release_notes: true

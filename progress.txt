@@ -719,3 +719,13 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
 - **Learnings:**
   - Setting DOTNET_ROLL_FORWARD_TO_PRERELEASE=1 is a safe way to run net10.0 apps inside preview-only containers.
   - Documenting the roll-forward behavior prevents confusion when containers ship prerelease runtimes.
+
+## 2026-02-01 - #56
+
+- Added Keep a Changelog-style CHANGELOG.md with anchors and initial version history.
+- Updated release workflow to publish changelog entries as release notes with a full changelog link.
+- Documented changelog usage in README.
+- Files changed: CHANGELOG.md, .github/workflows/release.yml, README.md
+- **Learnings:**
+  - Using a tag-derived changelog section keeps release notes consistent with documentation.
+  - Anchored changelog headers make it easy to link from release notes.

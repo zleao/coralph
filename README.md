@@ -121,6 +121,7 @@ dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --d
   and component descriptions
 - **[Using Coralph with Other Repositories](docs/using-with-other-repos.md)** -
   Adapt Coralph for Python, JavaScript, Go, and other tech stacks
+- **[Changelog](CHANGELOG.md)** - Release history and notable changes
 
 ## Features
 
@@ -296,17 +297,21 @@ just publish-local osx-arm64
 
 ### Creating a release
 
-1. **Tag the release** with a semantic version:
+1. **Update the changelog** with a new section for the version you are releasing.
+   The release workflow fails if the entry is missing.
+
+2. **Tag the release** with a semantic version:
 
    ```bash
    just tag v1.0.0
    git push origin v1.0.0
    ```
 
-2. **GitHub Actions automatically**:
+3. **GitHub Actions automatically**:
    - Builds self-contained binaries for all platforms
    - Creates a GitHub Release with the version from the tag
    - Attaches platform-specific binaries to the release
+   - **Uses the matching changelog section** as the release notes (with a link to the full changelog)
    - **Generates release notes** from commits and PRs since the last release
 
 ### Version in code
