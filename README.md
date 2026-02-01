@@ -324,37 +324,37 @@ just publish-local osx-arm64
 
 ### Creating a release
 
-1. **Update the changelog** with a new section for the version you are releasing:
-
-   ```markdown
-   ## [1.0.0] - 2026-02-01
-   ### Added
-   - New feature description
-   
-   ### Changed
-   - Changed feature description
-   
-   ### Fixed
-   - Bug fix description
-   ```
-
-2. **Tag the release** with a semantic version:
+1. **Tag the release** with a semantic version:
 
    ```bash
    just tag v1.0.0
    ```
    
    The `just tag` command will:
-   - ✅ Validate that CHANGELOG.md has an entry for the version
    - ✅ Create the git tag and push it to origin
-   - ❌ Fail with a helpful message if the changelog entry is missing
 
-3. **GitHub Actions automatically**:
+2. **GitHub Actions automatically**:
+   - **Generates and commits CHANGELOG.md entry** from commits since the last release
+   - Categorizes commits by conventional commit type (feat:, fix:, chore:, etc.)
    - Builds self-contained binaries for all platforms
    - Creates a GitHub Release with the version from the tag
    - Attaches platform-specific binaries to the release
-   - **Uses the matching changelog section** as the release notes (with a link to the full changelog)
-   - **Generates release notes** from commits and PRs since the last release
+   - **Uses the generated changelog section** as the release notes (with a link to the full changelog)
+   - **Generates additional release notes** from commits and PRs since the last release
+
+### Changelog automation
+
+The release workflow automatically generates CHANGELOG.md entries:
+
+- **Commit parsing**: Categorizes commits by [Conventional Commits](https://www.conventionalcommits.org/) type:
+  - `feat:` → Added section
+  - `fix:` → Fixed section
+  - `chore:`, `refactor:`, `perf:`, `style:` → Changed section
+- **Anchor generation**: Creates anchored headings for deep linking (e.g., `v1-0-0`)
+- **Reference links**: Updates comparison links at the bottom of CHANGELOG.md
+- **Automatic commit**: Pushes the updated CHANGELOG.md back to the main branch
+
+This means you **no longer need to manually update CHANGELOG.md**. The changelog is auto-generated from your commit messages during the release process.
 
 ### Version in code
 

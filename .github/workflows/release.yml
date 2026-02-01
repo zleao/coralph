@@ -70,6 +70,24 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Need full history for changelog generation
+    
+    - name: Update CHANGELOG.md
+      run: |
+        TAG="${GITHUB_REF#refs/tags/}"
+        VERSION="${TAG#v}"
+        ./.github/scripts/update-changelog.sh "$VERSION"
+      shell: bash
+    
+    - name: Commit and push CHANGELOG.md
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add CHANGELOG.md
+        git commit -m "chore: update CHANGELOG.md for ${GITHUB_REF#refs/tags/}" || echo "No changes to commit"
+        git push origin HEAD:main
+      shell: bash
     
     - name: Generate release notes from changelog
       run: |
@@ -82,10 +100,6 @@ jobs:
           in_section && $0 ~ "^## \\[" { exit }
           in_section { print }
         ' CHANGELOG.md > release-notes.md
-        if [[ ! -s release-notes.md ]]; then
-          echo "Missing changelog entry for $VERSION."
-          exit 1
-        fi
         printf "\n[Full changelog](%s)\n" "$CHANGELOG_URL" >> release-notes.md
       shell: bash
     

@@ -782,3 +782,18 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - PowerShell Select-String works well for pattern matching in justfiles
   - Failing fast with clear instructions is better than silent failures in CI
   - This approach balances automation (validation) with flexibility (user still writes the changelog)
+
+## 2026-02-01 - #62
+
+- Automated CHANGELOG.md generation in the release pipeline
+- Created .github/scripts/update-changelog.sh to generate changelog entries from commit messages
+- Modified release workflow to auto-generate and commit CHANGELOG.md before creating release
+- Removed changelog validation from justfile (already uncommitted)
+- Updated README documentation to describe automated changelog workflow
+- Files changed: .github/scripts/update-changelog.sh (new), .github/workflows/release.yml, justfile, README.md, progress.txt
+- **Learnings:**
+  - Conventional commits (feat:, fix:, chore:) enable automated categorization into Added/Fixed/Changed sections
+  - GitHub Actions can push commits back to main during release workflow with proper git config
+  - Using temp files in bash scripts avoids awk multiline variable issues
+  - macOS grep doesn't support -P (Perl regex), use sed -E instead for portability
+
