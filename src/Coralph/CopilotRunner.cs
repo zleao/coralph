@@ -153,283 +153,283 @@ internal static class CopilotRunner
                 {
                     switch (evt)
                     {
-                    case SessionStartEvent sessionStart:
-                        copilotSessionId = sessionStart.Data.SessionId;
-                        Emit("copilot_session_start", fields: new Dictionary<string, object?>
-                        {
-                            ["copilotSessionId"] = sessionStart.Data.SessionId,
-                            ["selectedModel"] = sessionStart.Data.SelectedModel,
-                            ["startTime"] = sessionStart.Data.StartTime,
-                            ["version"] = sessionStart.Data.Version,
-                            ["copilotVersion"] = sessionStart.Data.CopilotVersion,
-                            ["producer"] = sessionStart.Data.Producer
-                        });
-                        break;
-                    case AssistantTurnStartEvent assistantTurnStart:
-                        Emit("assistant_turn_start", fields: new Dictionary<string, object?>
-                        {
-                            ["assistantTurnId"] = assistantTurnStart.Data.TurnId
-                        });
-                        break;
-                    case AssistantTurnEndEvent assistantTurnEnd:
-                        Emit("assistant_turn_end", fields: new Dictionary<string, object?>
-                        {
-                            ["assistantTurnId"] = assistantTurnEnd.Data.TurnId
-                        });
-                        break;
-                    case AssistantMessageDeltaEvent delta:
-                        {
-                            var messageId = ResolveAssistantMessageId(delta.Data.MessageId);
-                            EnsureAssistantMessageStart(messageId, delta.Data.ParentToolCallId);
-                            Emit("message_update", messageId: messageId, fields: new Dictionary<string, object?>
+                        case SessionStartEvent sessionStart:
+                            copilotSessionId = sessionStart.Data.SessionId;
+                            Emit("copilot_session_start", fields: new Dictionary<string, object?>
                             {
-                                ["message"] = new Dictionary<string, object?>
-                                {
-                                    ["id"] = messageId,
-                                    ["role"] = "assistant"
-                                },
-                                ["delta"] = delta.Data.DeltaContent,
-                                ["parentToolCallId"] = delta.Data.ParentToolCallId,
-                                ["totalResponseSizeBytes"] = delta.Data.TotalResponseSizeBytes
+                                ["copilotSessionId"] = sessionStart.Data.SessionId,
+                                ["selectedModel"] = sessionStart.Data.SelectedModel,
+                                ["startTime"] = sessionStart.Data.StartTime,
+                                ["version"] = sessionStart.Data.Version,
+                                ["copilotVersion"] = sessionStart.Data.CopilotVersion,
+                                ["producer"] = sessionStart.Data.Producer
                             });
-                        }
-                        if (!inAssistantMode)
-                        {
-                            if (inReasoningMode)
+                            break;
+                        case AssistantTurnStartEvent assistantTurnStart:
+                            Emit("assistant_turn_start", fields: new Dictionary<string, object?>
+                            {
+                                ["assistantTurnId"] = assistantTurnStart.Data.TurnId
+                            });
+                            break;
+                        case AssistantTurnEndEvent assistantTurnEnd:
+                            Emit("assistant_turn_end", fields: new Dictionary<string, object?>
+                            {
+                                ["assistantTurnId"] = assistantTurnEnd.Data.TurnId
+                            });
+                            break;
+                        case AssistantMessageDeltaEvent delta:
+                            {
+                                var messageId = ResolveAssistantMessageId(delta.Data.MessageId);
+                                EnsureAssistantMessageStart(messageId, delta.Data.ParentToolCallId);
+                                Emit("message_update", messageId: messageId, fields: new Dictionary<string, object?>
+                                {
+                                    ["message"] = new Dictionary<string, object?>
+                                    {
+                                        ["id"] = messageId,
+                                        ["role"] = "assistant"
+                                    },
+                                    ["delta"] = delta.Data.DeltaContent,
+                                    ["parentToolCallId"] = delta.Data.ParentToolCallId,
+                                    ["totalResponseSizeBytes"] = delta.Data.TotalResponseSizeBytes
+                                });
+                            }
+                            if (!inAssistantMode)
+                            {
+                                if (inReasoningMode)
+                                {
+                                    ConsoleOutput.WriteLine();
+                                    inReasoningMode = false;
+                                }
+                                inAssistantMode = true;
+                            }
+                            if (opt.ColorizedOutput)
+                            {
+                                ConsoleOutput.WriteAssistant(delta.Data.DeltaContent);
+                            }
+                            else
+                            {
+                                ConsoleOutput.Write(delta.Data.DeltaContent);
+                            }
+                            output.Append(delta.Data.DeltaContent);
+                            break;
+                        case AssistantReasoningDeltaEvent reasoning:
+                            if (!opt.ShowReasoning)
+                            {
+                                break;
+                            }
+                            {
+                                var reasoningId = ResolveReasoningId(reasoning.Data.ReasoningId);
+                                EnsureReasoningMessageStart(reasoningId);
+                                Emit("message_update", messageId: reasoningId, fields: new Dictionary<string, object?>
+                                {
+                                    ["message"] = new Dictionary<string, object?>
+                                    {
+                                        ["id"] = reasoningId,
+                                        ["role"] = "reasoning"
+                                    },
+                                    ["delta"] = reasoning.Data.DeltaContent
+                                });
+                            }
+                            if (!inReasoningMode)
+                            {
+                                if (inAssistantMode)
+                                {
+                                    ConsoleOutput.WriteLine();
+                                    inAssistantMode = false;
+                                }
+                                inReasoningMode = true;
+                            }
+                            if (opt.ColorizedOutput)
+                            {
+                                ConsoleOutput.WriteReasoning(reasoning.Data.DeltaContent);
+                            }
+                            else
+                            {
+                                ConsoleOutput.Write(reasoning.Data.DeltaContent);
+                            }
+                            break;
+                        case ToolExecutionStartEvent toolStart:
+                            toolNamesByCallId[toolStart.Data.ToolCallId] = toolStart.Data.ToolName;
+                            toolParentByCallId[toolStart.Data.ToolCallId] = toolStart.Data.ParentToolCallId;
+                            Emit("tool_execution_start", toolCallId: toolStart.Data.ToolCallId, fields: new Dictionary<string, object?>
+                            {
+                                ["toolName"] = toolStart.Data.ToolName,
+                                ["args"] = toolStart.Data.Arguments,
+                                ["parentToolCallId"] = toolStart.Data.ParentToolCallId,
+                                ["mcpToolName"] = toolStart.Data.McpToolName,
+                                ["mcpServerName"] = toolStart.Data.McpServerName
+                            });
+                            if (inReasoningMode || inAssistantMode)
                             {
                                 ConsoleOutput.WriteLine();
                                 inReasoningMode = false;
-                            }
-                            inAssistantMode = true;
-                        }
-                        if (opt.ColorizedOutput)
-                        {
-                            ConsoleOutput.WriteAssistant(delta.Data.DeltaContent);
-                        }
-                        else
-                        {
-                            ConsoleOutput.Write(delta.Data.DeltaContent);
-                        }
-                        output.Append(delta.Data.DeltaContent);
-                        break;
-                    case AssistantReasoningDeltaEvent reasoning:
-                        if (!opt.ShowReasoning)
-                        {
-                            break;
-                        }
-                        {
-                            var reasoningId = ResolveReasoningId(reasoning.Data.ReasoningId);
-                            EnsureReasoningMessageStart(reasoningId);
-                            Emit("message_update", messageId: reasoningId, fields: new Dictionary<string, object?>
-                            {
-                                ["message"] = new Dictionary<string, object?>
-                                {
-                                    ["id"] = reasoningId,
-                                    ["role"] = "reasoning"
-                                },
-                                ["delta"] = reasoning.Data.DeltaContent
-                            });
-                        }
-                        if (!inReasoningMode)
-                        {
-                            if (inAssistantMode)
-                            {
-                                ConsoleOutput.WriteLine();
                                 inAssistantMode = false;
                             }
-                            inReasoningMode = true;
-                        }
-                        if (opt.ColorizedOutput)
-                        {
-                            ConsoleOutput.WriteReasoning(reasoning.Data.DeltaContent);
-                        }
-                        else
-                        {
-                            ConsoleOutput.Write(reasoning.Data.DeltaContent);
-                        }
-                        break;
-                    case ToolExecutionStartEvent toolStart:
-                        toolNamesByCallId[toolStart.Data.ToolCallId] = toolStart.Data.ToolName;
-                        toolParentByCallId[toolStart.Data.ToolCallId] = toolStart.Data.ParentToolCallId;
-                        Emit("tool_execution_start", toolCallId: toolStart.Data.ToolCallId, fields: new Dictionary<string, object?>
-                        {
-                            ["toolName"] = toolStart.Data.ToolName,
-                            ["args"] = toolStart.Data.Arguments,
-                            ["parentToolCallId"] = toolStart.Data.ParentToolCallId,
-                            ["mcpToolName"] = toolStart.Data.McpToolName,
-                            ["mcpServerName"] = toolStart.Data.McpServerName
-                        });
-                        if (inReasoningMode || inAssistantMode)
-                        {
+                            lastToolName = toolStart.Data.ToolName;
+                            ConsoleOutput.WriteToolStart(toolStart.Data.ToolName);
+                            break;
+                        case ToolExecutionProgressEvent toolProgress:
+                            toolNamesByCallId.TryGetValue(toolProgress.Data.ToolCallId, out var progressToolName);
+                            Emit("tool_execution_update", toolCallId: toolProgress.Data.ToolCallId, fields: new Dictionary<string, object?>
+                            {
+                                ["toolName"] = progressToolName,
+                                ["updateType"] = "progress",
+                                ["progressMessage"] = toolProgress.Data.ProgressMessage
+                            });
+                            break;
+                        case ToolExecutionPartialResultEvent toolPartial:
+                            toolNamesByCallId.TryGetValue(toolPartial.Data.ToolCallId, out var partialToolName);
+                            Emit("tool_execution_update", toolCallId: toolPartial.Data.ToolCallId, fields: new Dictionary<string, object?>
+                            {
+                                ["toolName"] = partialToolName,
+                                ["updateType"] = "partial_result",
+                                ["partialResult"] = toolPartial.Data.PartialOutput
+                            });
+                            break;
+                        case ToolExecutionCompleteEvent toolComplete:
+                            toolNamesByCallId.TryGetValue(toolComplete.Data.ToolCallId, out var completeToolName);
+                            toolParentByCallId.TryGetValue(toolComplete.Data.ToolCallId, out var completeParentToolCallId);
+                            Emit("tool_execution_end", toolCallId: toolComplete.Data.ToolCallId, fields: new Dictionary<string, object?>
+                            {
+                                ["toolName"] = completeToolName,
+                                ["success"] = toolComplete.Data.Success,
+                                ["isError"] = !toolComplete.Data.Success,
+                                ["error"] = toolComplete.Data.Error is null ? null : new Dictionary<string, object?>
+                                {
+                                    ["code"] = toolComplete.Data.Error.Code,
+                                    ["message"] = toolComplete.Data.Error.Message
+                                },
+                                ["result"] = toolComplete.Data.Result?.Content,
+                                ["detailedResult"] = toolComplete.Data.Result?.DetailedContent,
+                                ["isUserRequested"] = toolComplete.Data.IsUserRequested,
+                                ["parentToolCallId"] = completeParentToolCallId
+                            });
+                            var toolOutput = toolComplete.Data.Result?.Content;
+                            if (!string.IsNullOrWhiteSpace(toolOutput))
+                            {
+                                if (IsIgnorableToolOutput(lastToolName, toolOutput))
+                                {
+                                    lastToolName = null;
+                                    toolNamesByCallId.Remove(toolComplete.Data.ToolCallId);
+                                    toolParentByCallId.Remove(toolComplete.Data.ToolCallId);
+                                    break;
+                                }
+                                var display = SummarizeToolOutput(toolOutput);
+                                ConsoleOutput.WriteToolComplete(lastToolName ?? "unknown", display);
+                            }
+                            lastToolName = null;
+                            toolNamesByCallId.Remove(toolComplete.Data.ToolCallId);
+                            toolParentByCallId.Remove(toolComplete.Data.ToolCallId);
+                            break;
+                        case SessionCompactionStartEvent:
+                            Emit("compaction_start");
+                            break;
+                        case SessionCompactionCompleteEvent compaction:
+                            Emit("compaction_end", fields: new Dictionary<string, object?>
+                            {
+                                ["success"] = compaction.Data.Success,
+                                ["error"] = compaction.Data.Error,
+                                ["messagesRemoved"] = compaction.Data.MessagesRemoved,
+                                ["tokensRemoved"] = compaction.Data.TokensRemoved,
+                                ["preCompactionTokens"] = compaction.Data.PreCompactionTokens,
+                                ["postCompactionTokens"] = compaction.Data.PostCompactionTokens,
+                                ["preCompactionMessagesLength"] = compaction.Data.PreCompactionMessagesLength,
+                                ["summaryContent"] = compaction.Data.SummaryContent
+                            });
+                            break;
+                        case SessionSnapshotRewindEvent rewind:
+                            Emit("retry", fields: new Dictionary<string, object?>
+                            {
+                                ["reason"] = "snapshot_rewind",
+                                ["eventsRemoved"] = rewind.Data.EventsRemoved,
+                                ["upToEventId"] = rewind.Data.UpToEventId
+                            });
+                            break;
+                        case SessionUsageInfoEvent sessionUsage:
+                            Emit("session_usage", fields: new Dictionary<string, object?>
+                            {
+                                ["currentTokens"] = sessionUsage.Data.CurrentTokens,
+                                ["tokenLimit"] = sessionUsage.Data.TokenLimit,
+                                ["messagesLength"] = sessionUsage.Data.MessagesLength
+                            });
+                            break;
+                        case AssistantUsageEvent assistantUsage:
+                            Emit("usage", fields: new Dictionary<string, object?>
+                            {
+                                ["apiCallId"] = assistantUsage.Data.ApiCallId,
+                                ["providerCallId"] = assistantUsage.Data.ProviderCallId,
+                                ["model"] = assistantUsage.Data.Model,
+                                ["inputTokens"] = assistantUsage.Data.InputTokens,
+                                ["outputTokens"] = assistantUsage.Data.OutputTokens,
+                                ["cacheReadTokens"] = assistantUsage.Data.CacheReadTokens,
+                                ["cacheWriteTokens"] = assistantUsage.Data.CacheWriteTokens,
+                                ["cost"] = assistantUsage.Data.Cost,
+                                ["duration"] = assistantUsage.Data.Duration,
+                                ["initiator"] = assistantUsage.Data.Initiator,
+                                ["quotaSnapshots"] = assistantUsage.Data.QuotaSnapshots
+                            });
+                            break;
+                        case AssistantMessageEvent:
+                            {
+                                var messageEvent = (AssistantMessageEvent)evt;
+                                var messageId = ResolveAssistantMessageId(messageEvent.Data.MessageId);
+                                EnsureAssistantMessageStart(messageId, messageEvent.Data.ParentToolCallId);
+                                Emit("message_end", messageId: messageId, fields: new Dictionary<string, object?>
+                                {
+                                    ["message"] = new Dictionary<string, object?>
+                                    {
+                                        ["id"] = messageId,
+                                        ["role"] = "assistant",
+                                        ["content"] = messageEvent.Data.Content,
+                                        ["parentToolCallId"] = messageEvent.Data.ParentToolCallId,
+                                        ["toolRequests"] = MapToolRequests(messageEvent.Data.ToolRequests)
+                                    }
+                                });
+                                activeAssistantMessageId = null;
+                            }
                             ConsoleOutput.WriteLine();
                             inReasoningMode = false;
                             inAssistantMode = false;
-                        }
-                        lastToolName = toolStart.Data.ToolName;
-                        ConsoleOutput.WriteToolStart(toolStart.Data.ToolName);
-                        break;
-                    case ToolExecutionProgressEvent toolProgress:
-                        toolNamesByCallId.TryGetValue(toolProgress.Data.ToolCallId, out var progressToolName);
-                        Emit("tool_execution_update", toolCallId: toolProgress.Data.ToolCallId, fields: new Dictionary<string, object?>
-                        {
-                            ["toolName"] = progressToolName,
-                            ["updateType"] = "progress",
-                            ["progressMessage"] = toolProgress.Data.ProgressMessage
-                        });
-                        break;
-                    case ToolExecutionPartialResultEvent toolPartial:
-                        toolNamesByCallId.TryGetValue(toolPartial.Data.ToolCallId, out var partialToolName);
-                        Emit("tool_execution_update", toolCallId: toolPartial.Data.ToolCallId, fields: new Dictionary<string, object?>
-                        {
-                            ["toolName"] = partialToolName,
-                            ["updateType"] = "partial_result",
-                            ["partialResult"] = toolPartial.Data.PartialOutput
-                        });
-                        break;
-                    case ToolExecutionCompleteEvent toolComplete:
-                        toolNamesByCallId.TryGetValue(toolComplete.Data.ToolCallId, out var completeToolName);
-                        toolParentByCallId.TryGetValue(toolComplete.Data.ToolCallId, out var completeParentToolCallId);
-                        Emit("tool_execution_end", toolCallId: toolComplete.Data.ToolCallId, fields: new Dictionary<string, object?>
-                        {
-                            ["toolName"] = completeToolName,
-                            ["success"] = toolComplete.Data.Success,
-                            ["isError"] = !toolComplete.Data.Success,
-                            ["error"] = toolComplete.Data.Error is null ? null : new Dictionary<string, object?>
+                            break;
+                        case AssistantReasoningEvent:
+                            if (opt.ShowReasoning)
                             {
-                                ["code"] = toolComplete.Data.Error.Code,
-                                ["message"] = toolComplete.Data.Error.Message
-                            },
-                            ["result"] = toolComplete.Data.Result?.Content,
-                            ["detailedResult"] = toolComplete.Data.Result?.DetailedContent,
-                            ["isUserRequested"] = toolComplete.Data.IsUserRequested,
-                            ["parentToolCallId"] = completeParentToolCallId
-                        });
-                        var toolOutput = toolComplete.Data.Result?.Content;
-                        if (!string.IsNullOrWhiteSpace(toolOutput))
-                        {
-                            if (IsIgnorableToolOutput(lastToolName, toolOutput))
-                            {
-                                lastToolName = null;
-                                toolNamesByCallId.Remove(toolComplete.Data.ToolCallId);
-                                toolParentByCallId.Remove(toolComplete.Data.ToolCallId);
-                                break;
+                                var reasoningEvent = (AssistantReasoningEvent)evt;
+                                var reasoningId = ResolveReasoningId(reasoningEvent.Data.ReasoningId);
+                                EnsureReasoningMessageStart(reasoningId);
+                                Emit("message_end", messageId: reasoningId, fields: new Dictionary<string, object?>
+                                {
+                                    ["message"] = new Dictionary<string, object?>
+                                    {
+                                        ["id"] = reasoningId,
+                                        ["role"] = "reasoning",
+                                        ["content"] = reasoningEvent.Data.Content
+                                    }
+                                });
+                                activeReasoningId = null;
                             }
-                            var display = SummarizeToolOutput(toolOutput);
-                            ConsoleOutput.WriteToolComplete(lastToolName ?? "unknown", display);
-                        }
-                        lastToolName = null;
-                        toolNamesByCallId.Remove(toolComplete.Data.ToolCallId);
-                        toolParentByCallId.Remove(toolComplete.Data.ToolCallId);
-                        break;
-                    case SessionCompactionStartEvent:
-                        Emit("compaction_start");
-                        break;
-                    case SessionCompactionCompleteEvent compaction:
-                        Emit("compaction_end", fields: new Dictionary<string, object?>
-                        {
-                            ["success"] = compaction.Data.Success,
-                            ["error"] = compaction.Data.Error,
-                            ["messagesRemoved"] = compaction.Data.MessagesRemoved,
-                            ["tokensRemoved"] = compaction.Data.TokensRemoved,
-                            ["preCompactionTokens"] = compaction.Data.PreCompactionTokens,
-                            ["postCompactionTokens"] = compaction.Data.PostCompactionTokens,
-                            ["preCompactionMessagesLength"] = compaction.Data.PreCompactionMessagesLength,
-                            ["summaryContent"] = compaction.Data.SummaryContent
-                        });
-                        break;
-                    case SessionSnapshotRewindEvent rewind:
-                        Emit("retry", fields: new Dictionary<string, object?>
-                        {
-                            ["reason"] = "snapshot_rewind",
-                            ["eventsRemoved"] = rewind.Data.EventsRemoved,
-                            ["upToEventId"] = rewind.Data.UpToEventId
-                        });
-                        break;
-                    case SessionUsageInfoEvent sessionUsage:
-                        Emit("session_usage", fields: new Dictionary<string, object?>
-                        {
-                            ["currentTokens"] = sessionUsage.Data.CurrentTokens,
-                            ["tokenLimit"] = sessionUsage.Data.TokenLimit,
-                            ["messagesLength"] = sessionUsage.Data.MessagesLength
-                        });
-                        break;
-                    case AssistantUsageEvent assistantUsage:
-                        Emit("usage", fields: new Dictionary<string, object?>
-                        {
-                            ["apiCallId"] = assistantUsage.Data.ApiCallId,
-                            ["providerCallId"] = assistantUsage.Data.ProviderCallId,
-                            ["model"] = assistantUsage.Data.Model,
-                            ["inputTokens"] = assistantUsage.Data.InputTokens,
-                            ["outputTokens"] = assistantUsage.Data.OutputTokens,
-                            ["cacheReadTokens"] = assistantUsage.Data.CacheReadTokens,
-                            ["cacheWriteTokens"] = assistantUsage.Data.CacheWriteTokens,
-                            ["cost"] = assistantUsage.Data.Cost,
-                            ["duration"] = assistantUsage.Data.Duration,
-                            ["initiator"] = assistantUsage.Data.Initiator,
-                            ["quotaSnapshots"] = assistantUsage.Data.QuotaSnapshots
-                        });
-                        break;
-                    case AssistantMessageEvent:
-                        {
-                            var messageEvent = (AssistantMessageEvent)evt;
-                            var messageId = ResolveAssistantMessageId(messageEvent.Data.MessageId);
-                            EnsureAssistantMessageStart(messageId, messageEvent.Data.ParentToolCallId);
-                            Emit("message_end", messageId: messageId, fields: new Dictionary<string, object?>
+                            ConsoleOutput.WriteLine();
+                            inReasoningMode = false;
+                            inAssistantMode = false;
+                            break;
+                        case SessionErrorEvent err:
+                            Emit("session_error", fields: new Dictionary<string, object?>
                             {
-                                ["message"] = new Dictionary<string, object?>
-                                {
-                                    ["id"] = messageId,
-                                    ["role"] = "assistant",
-                                    ["content"] = messageEvent.Data.Content,
-                                    ["parentToolCallId"] = messageEvent.Data.ParentToolCallId,
-                                    ["toolRequests"] = MapToolRequests(messageEvent.Data.ToolRequests)
-                                }
+                                ["errorType"] = err.Data.ErrorType,
+                                ["message"] = err.Data.Message,
+                                ["stack"] = err.Data.Stack,
+                                ["copilotSessionId"] = copilotSessionId
                             });
-                            activeAssistantMessageId = null;
-                        }
-                        ConsoleOutput.WriteLine();
-                        inReasoningMode = false;
-                        inAssistantMode = false;
-                        break;
-                    case AssistantReasoningEvent:
-                        if (opt.ShowReasoning)
-                        {
-                            var reasoningEvent = (AssistantReasoningEvent)evt;
-                            var reasoningId = ResolveReasoningId(reasoningEvent.Data.ReasoningId);
-                            EnsureReasoningMessageStart(reasoningId);
-                            Emit("message_end", messageId: reasoningId, fields: new Dictionary<string, object?>
+                            done.TrySetException(new InvalidOperationException(err.Data.Message));
+                            break;
+                        case SessionIdleEvent:
+                            Emit("copilot_session_end", fields: new Dictionary<string, object?>
                             {
-                                ["message"] = new Dictionary<string, object?>
-                                {
-                                    ["id"] = reasoningId,
-                                    ["role"] = "reasoning",
-                                    ["content"] = reasoningEvent.Data.Content
-                                }
+                                ["copilotSessionId"] = copilotSessionId,
+                                ["reason"] = "idle"
                             });
-                            activeReasoningId = null;
-                        }
-                        ConsoleOutput.WriteLine();
-                        inReasoningMode = false;
-                        inAssistantMode = false;
-                        break;
-                    case SessionErrorEvent err:
-                        Emit("session_error", fields: new Dictionary<string, object?>
-                        {
-                            ["errorType"] = err.Data.ErrorType,
-                            ["message"] = err.Data.Message,
-                            ["stack"] = err.Data.Stack,
-                            ["copilotSessionId"] = copilotSessionId
-                        });
-                        done.TrySetException(new InvalidOperationException(err.Data.Message));
-                        break;
-                    case SessionIdleEvent:
-                        Emit("copilot_session_end", fields: new Dictionary<string, object?>
-                        {
-                            ["copilotSessionId"] = copilotSessionId,
-                            ["reason"] = "idle"
-                        });
-                        done.TrySetResult();
-                        break;
+                            done.TrySetResult();
+                            break;
                     }
                 });
 

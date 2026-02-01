@@ -73,13 +73,13 @@ internal static class DockerSandbox
         try
         {
             var launchInfo = ResolveLaunchInfo(repoRoot);
-        var args = BuildDockerRunArguments(opt, repoRoot, combinedPromptPath, prModeActive, launchInfo);
-        var result = await RunDockerAsync(args, ct, streamOutput: true);
-        var output = CombineOutput(result.Output, result.Error);
-        if (result.ExitCode != 0)
-        {
-            var error = string.IsNullOrWhiteSpace(result.Error) ? "Docker sandbox failed." : result.Error.Trim();
-            throw new InvalidOperationException(error);
+            var args = BuildDockerRunArguments(opt, repoRoot, combinedPromptPath, prModeActive, launchInfo);
+            var result = await RunDockerAsync(args, ct, streamOutput: true);
+            var output = CombineOutput(result.Output, result.Error);
+            if (result.ExitCode != 0)
+            {
+                var error = string.IsNullOrWhiteSpace(result.Error) ? "Docker sandbox failed." : result.Error.Trim();
+                throw new InvalidOperationException(error);
             }
 
             return output;
