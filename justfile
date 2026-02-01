@@ -30,7 +30,26 @@ ci: test
     #!{{shebang}}
     Write-Host "✅ All checks passed!" -ForegroundColor Green
 
+# Update changelog for upcoming release (usage: just changelog v1.0.0)
+changelog version:
+    #!{{shebang}}
+    if (-not "{{version}}".StartsWith("v")) {
+        Write-Host "❌ Version must start with 'v' (e.g., v1.0.0)" -ForegroundColor Red
+        exit 1
+    }
+    $cleanVersion = "{{version}}" -replace '^v', ''
+    
+    # Run the changelog generation script
+    bash ./.github/scripts/update-changelog.sh $cleanVersion
+    
+    Write-Host "✅ Updated CHANGELOG.md for version {{version}}" -ForegroundColor Green
+    Write-Host "📝 Review the changes, then commit and push:" -ForegroundColor Cyan
+    Write-Host "   git add CHANGELOG.md" -ForegroundColor Gray
+    Write-Host "   git commit -m 'docs: update changelog for {{version}}'" -ForegroundColor Gray
+    Write-Host "   git push" -ForegroundColor Gray
+
 # Create a tagged release (usage: just tag v1.0.0)
+# IMPORTANT: Run 'just changelog v1.0.0' first and commit the changes!
 tag version:
     #!{{shebang}}
     if (-not "{{version}}".StartsWith("v")) {
@@ -38,6 +57,14 @@ tag version:
         exit 1
     }
     $cleanVersion = "{{version}}" -replace '^v', ''
+
+    # Verify CHANGELOG.md has an entry for this version
+    $changelogContent = Get-Content CHANGELOG.md -Raw
+    if ($changelogContent -notmatch "\[$cleanVersion\]") {
+        Write-Host "❌ CHANGELOG.md is missing an entry for version $cleanVersion" -ForegroundColor Red
+        Write-Host "   Run: just changelog {{version}}" -ForegroundColor Yellow
+        exit 1
+    }
 
     git tag "{{version}}"
     git push origin "{{version}}"

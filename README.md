@@ -291,7 +291,10 @@ just restore   # Restore dependencies
 just build     # Build solution
 just test      # Run tests
 
-# Create a version tag
+# Update changelog for a new version
+just changelog v1.0.0
+
+# Create a version tag (requires changelog entry)
 just tag v1.0.0
 ```
 
@@ -324,37 +327,57 @@ just publish-local osx-arm64
 
 ### Creating a release
 
-1. **Tag the release** with a semantic version:
+Coralph follows a **local changelog generation** workflow to comply with branch protection rules:
+
+1. **Update CHANGELOG.md locally**:
+
+   ```bash
+   # Generate changelog entry from git history
+   just changelog v1.0.0
+   
+   # Review the changes
+   git diff CHANGELOG.md
+   
+   # Commit and push to main (via PR if branch protection is enabled)
+   git add CHANGELOG.md
+   git commit -m "docs: update changelog for v1.0.0"
+   git push
+   ```
+   
+   The `just changelog` command:
+   - Analyzes commits since the last tag
+   - Categorizes commits by [Conventional Commits](https://www.conventionalcommits.org/) type:
+     - `feat:` → Added section
+     - `fix:` → Fixed section
+     - `chore:`, `refactor:`, `perf:`, `style:` → Changed section
+   - Creates anchored headings for deep linking (e.g., `v1-0-0`)
+   - Updates comparison links at the bottom of CHANGELOG.md
+
+2. **Create and push the tag**:
 
    ```bash
    just tag v1.0.0
    ```
    
    The `just tag` command will:
+   - ✅ Validate that CHANGELOG.md has an entry for the version (fails if missing)
    - ✅ Create the git tag and push it to origin
 
-2. **GitHub Actions automatically**:
-   - **Generates and commits CHANGELOG.md entry** from commits since the last release
-   - Categorizes commits by conventional commit type (feat:, fix:, chore:, etc.)
+3. **GitHub Actions automatically**:
+   - Validates that CHANGELOG.md contains the version entry (fails if missing)
    - Builds self-contained binaries for all platforms
+   - Extracts the changelog section for this version as release notes
    - Creates a GitHub Release with the version from the tag
    - Attaches platform-specific binaries to the release
-   - **Uses the generated changelog section** as the release notes (with a link to the full changelog)
-   - **Generates additional release notes** from commits and PRs since the last release
+   - Generates additional release notes from commits and PRs since the last release
 
-### Changelog automation
+### Why local changelog generation?
 
-The release workflow automatically generates CHANGELOG.md entries:
-
-- **Commit parsing**: Categorizes commits by [Conventional Commits](https://www.conventionalcommits.org/) type:
-  - `feat:` → Added section
-  - `fix:` → Fixed section
-  - `chore:`, `refactor:`, `perf:`, `style:` → Changed section
-- **Anchor generation**: Creates anchored headings for deep linking (e.g., `v1-0-0`)
-- **Reference links**: Updates comparison links at the bottom of CHANGELOG.md
-- **Automatic commit**: Pushes the updated CHANGELOG.md back to the main branch
-
-This means you **no longer need to manually update CHANGELOG.md**. The changelog is auto-generated from your commit messages during the release process.
+This workflow ensures:
+- **Branch protection compliance**: CHANGELOG.md updates happen via PR with CI checks
+- **No failed releases**: The pipeline validates (not generates) the changelog entry
+- **Clear audit trail**: Changelog commits are separate from release tags
+- **Human review**: Changes can be reviewed before they become part of the release
 
 ### Version in code
 
