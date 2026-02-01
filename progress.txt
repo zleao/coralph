@@ -735,3 +735,13 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
 - Files changed: src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, .devcontainer/devcontainer.json, coralph.config.json, README.md
 - **Learnings:**
   - The 1-10.0 devcontainers tag can miss the GA runtime; pin to 10.0 for sandbox stability.
+
+## 2026-02-01 - #58
+
+- Streamlined AGENTS.md logging section for clarity and conciseness
+- Verified .github/copilot-instructions.md is current (no changes needed)
+- Files changed: AGENTS.md
+- **Learnings:**
+  - AGENTS.md serves as quick reference, not detailed documentation
+  - Consolidated subsections into condensed format reduces scanning time
+  - .github/copilot-instructions.md already minimal and aligned with prompt.md

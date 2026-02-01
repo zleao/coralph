@@ -26,33 +26,17 @@ just ci
 - No environment variables are required for local development.
 
 ## Logging
-Coralph uses Serilog for structured logging with JSON output.
+Coralph uses Serilog for structured JSON logging.
 
-### Log Files
-- Location: `logs/coralph-{date}.log`
-- Format: Compact JSON (one JSON object per line)
-- Rotation: Daily, retaining 7 days
+- **Location**: `logs/coralph-{date}.log` (daily rotation, 7 days retention)
+- **Format**: Compact JSON (one object per line)
+- **Properties**: Application, Version, Model, Iteration (when applicable)
 
-### Log Properties
-Each log entry includes:
-- `Application`: "Coralph"
-- `Version`: Assembly version
-- `Model`: Configured AI model
-- `Iteration`: Current loop iteration (when in loop context)
-
-### Logging Patterns
+**Usage**:
 ```csharp
-// Informational events with structured properties
-Log.Information("Starting iteration {Iteration} of {MaxIterations}", i, maxIterations);
-
-// Errors with exception details
-Log.Error(ex, "Iteration {Iteration} failed with error", i);
-
-// Using LogContext for scoped properties
-using (LogContext.PushProperty("Iteration", i))
-{
-    // All log entries in this scope include Iteration
-}
+Log.Information("Starting iteration {Iteration}", i);
+Log.Error(ex, "Iteration {Iteration} failed", i);
+using (LogContext.PushProperty("Iteration", i)) { /* scoped property */ }
 ```
 
 ## Git Hooks (Opt-in)
