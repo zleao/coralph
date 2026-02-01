@@ -140,14 +140,19 @@ If addressing PR FEEDBACK (issue already has an open PR):
 
 # CLOSE THE ISSUE
 
+**Before closing, ALWAYS add a comment summarizing what was done:**
+Use `gh issue comment <number> --body "Summary of changes"` to document:
+- What was implemented or fixed
+- Key files changed
+- Any important decisions or gotchas
+
 **Direct Push Mode (default):**
-Close the issue using `gh issue close <number>` after committing your changes.
+After commenting, close the issue using `gh issue close <number>`.
 
 **PR Mode:**
-DO NOT close the issue directly. The PR will auto-close it when merged (via "Fixes #{number}" in the PR body).
+After commenting, DO NOT close the issue directly. The PR will auto-close it when merged (via "Fixes #{number}" in the PR body).
 
-If the issue is not complete, leave a comment on the GitHub issue with what was
-done in either mode.
+If the issue is not complete, leave a comment explaining what was done and what remains.
 
 # FINAL RULES
 

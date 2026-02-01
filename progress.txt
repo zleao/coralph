@@ -745,3 +745,16 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - AGENTS.md serves as quick reference, not detailed documentation
   - Consolidated subsections into condensed format reduces scanning time
   - .github/copilot-instructions.md already minimal and aligned with prompt.md
+
+## 2026-02-01 - #60
+
+- Fixed bug where CLI did not comment before closing issues
+- Updated prompt.md to explicitly require a comment summarizing changes before closing any issue
+- Added clear instructions for both Direct Push and PR modes
+- Verified fix with investigation of recent closed issues (#55-58 had no comments)
+- Files changed: prompt.md
+- **Learnings:**
+  - Explicit instructions in prompt.md are critical - implicit expectations don't work
+  - The assistant will follow the prompt exactly, so missing steps will be skipped
+  - Consistency in issue closure behavior requires clear documentation
+  - Comment-before-close pattern provides audit trail and context for users
