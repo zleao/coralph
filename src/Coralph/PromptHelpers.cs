@@ -151,6 +151,7 @@ internal static class PromptHelpers
         if (overrides.StreamEvents is { } streamEvents) target.StreamEvents = streamEvents;
         if (overrides.DockerSandbox is { } dockerSandbox) target.DockerSandbox = dockerSandbox;
         if (!string.IsNullOrWhiteSpace(overrides.DockerImage)) target.DockerImage = overrides.DockerImage;
+        if (overrides.ListModels is { } listModels) target.ListModels = listModels;
     }
 
     private static string TrimMarkdownWrapper(string value)

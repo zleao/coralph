@@ -93,6 +93,27 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
 
     var inDockerSandbox = string.Equals(Environment.GetEnvironmentVariable(DockerSandbox.SandboxFlagEnv), "1", StringComparison.Ordinal);
     var combinedPromptFile = Environment.GetEnvironmentVariable(DockerSandbox.CombinedPromptEnv);
+    if (opt.ListModels)
+    {
+        if (opt.DockerSandbox && !inDockerSandbox)
+        {
+            ConsoleOutput.WriteLine("Note: --list-models runs on the host environment; --docker-sandbox is ignored.");
+        }
+
+        try
+        {
+            var models = await CopilotModelDiscovery.ListModelsAsync(opt, ct);
+            CopilotModelDiscovery.WriteModels(models);
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
+            Log.Error(ex, "Failed to list Copilot models");
+            ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
+            return 1;
+        }
+    }
     if (opt.DockerSandbox && !inDockerSandbox)
     {
         var dockerCheck = await DockerSandbox.CheckDockerAsync(ct);

@@ -31,6 +31,7 @@ internal sealed class LoopOptions
     public bool StreamEvents { get; set; }
     public bool DockerSandbox { get; set; }
     public string DockerImage { get; set; } = "mcr.microsoft.com/devcontainers/dotnet:10.0";
+    public bool ListModels { get; set; }
 }
 
 internal sealed class LoopOptionsOverrides
@@ -61,4 +62,5 @@ internal sealed class LoopOptionsOverrides
     public bool? StreamEvents { get; set; }
     public bool? DockerSandbox { get; set; }
     public string? DockerImage { get; set; }
+    public bool? ListModels { get; set; }
 }
