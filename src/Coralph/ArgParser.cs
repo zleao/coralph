@@ -31,6 +31,8 @@ internal static class ArgParser
         var cliUrlOption = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
         var copilotConfigPathOption = new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox");
         var copilotTokenOption = new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)");
+        var toolAllowOption = new Option<string[]>("--tool-allow", "Allow tool/permission kinds (repeatable or comma-separated)");
+        var toolDenyOption = new Option<string[]>("--tool-deny", "Deny tool/permission kinds (repeatable or comma-separated)");
         var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
         var initialConfigOption = new Option<bool>("--initial-config", "Writes default config json and exits");
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
@@ -38,6 +40,9 @@ internal static class ArgParser
         var streamEventsOption = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
         var dockerSandboxOption = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
         var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
+
+        toolAllowOption.AllowMultipleArgumentsPerToken = true;
+        toolDenyOption.AllowMultipleArgumentsPerToken = true;
 
         root.AddOption(helpOption);
         root.AddOption(versionOption);
@@ -55,6 +60,8 @@ internal static class ArgParser
         root.AddOption(cliUrlOption);
         root.AddOption(copilotConfigPathOption);
         root.AddOption(copilotTokenOption);
+        root.AddOption(toolAllowOption);
+        root.AddOption(toolDenyOption);
         root.AddOption(configOption);
         root.AddOption(initialConfigOption);
         root.AddOption(showReasoningOption);
@@ -239,6 +246,26 @@ internal static class ArgParser
             }
         }
 
+        var toolAllow = result.GetValueForOption(toolAllowOption);
+        if (toolAllow is { Length: > 0 })
+        {
+            var normalized = NormalizeMultiValueOption(toolAllow);
+            if (normalized.Length > 0)
+            {
+                options.ToolAllow = normalized;
+            }
+        }
+
+        var toolDeny = result.GetValueForOption(toolDenyOption);
+        if (toolDeny is { Length: > 0 })
+        {
+            var normalized = NormalizeMultiValueOption(toolDeny);
+            if (normalized.Length > 0)
+            {
+                options.ToolDeny = normalized;
+            }
+        }
+
         var dockerSandbox = result.GetValueForOption(dockerSandboxOption);
         if (dockerSandbox.HasValue)
         {
@@ -312,6 +339,16 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--cli-url", "Optional: connect to existing CLI server"));
         root.AddOption(new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox"));
         root.AddOption(new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)"));
+        var toolAllowOption = new Option<string[]>("--tool-allow", "Allow tool/permission kinds (repeatable or comma-separated)")
+        {
+            AllowMultipleArgumentsPerToken = true
+        };
+        var toolDenyOption = new Option<string[]>("--tool-deny", "Deny tool/permission kinds (repeatable or comma-separated)")
+        {
+            AllowMultipleArgumentsPerToken = true
+        };
+        root.AddOption(toolAllowOption);
+        root.AddOption(toolDenyOption);
         root.AddOption(new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)"));
         root.AddOption(new Option<bool>("--initial-config", "Writes default config json and exits"));
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
@@ -320,5 +357,28 @@ internal static class ArgParser
         root.AddOption(new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)"));
         root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)"));
         return root;
+    }
+
+    private static string[] NormalizeMultiValueOption(IEnumerable<string> values)
+    {
+        var results = new List<string>();
+        foreach (var value in values)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            var tokens = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var token in tokens)
+            {
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    results.Add(token);
+                }
+            }
+        }
+
+        return results.ToArray();
     }
 }

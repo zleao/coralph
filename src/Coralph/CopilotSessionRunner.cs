@@ -49,14 +49,14 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
             started = true;
 
             var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile);
+            var permissionPolicy = new PermissionPolicy(opt, eventStream);
 
             session = await client.CreateSessionAsync(new SessionConfig
             {
                 Model = opt.Model,
                 Streaming = true,
                 Tools = customTools,
-                OnPermissionRequest = (request, invocation) =>
-                    Task.FromResult(new PermissionRequestResult { Kind = "approved" }),
+                OnPermissionRequest = permissionPolicy.HandleAsync,
             });
 
             var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: false, emitSessionEndOnDispose: true);

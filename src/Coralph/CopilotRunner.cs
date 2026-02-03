@@ -27,14 +27,14 @@ internal static class CopilotRunner
             started = true;
 
             var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile);
+            var permissionPolicy = new PermissionPolicy(opt, eventStream);
 
             await using (var session = await client.CreateSessionAsync(new SessionConfig
             {
                 Model = opt.Model,
                 Streaming = true,
                 Tools = customTools,
-                OnPermissionRequest = (request, invocation) =>
-                    Task.FromResult(new PermissionRequestResult { Kind = "approved" }),
+                OnPermissionRequest = permissionPolicy.HandleAsync,
             }))
             {
                 var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: true, emitSessionEndOnDispose: false);
