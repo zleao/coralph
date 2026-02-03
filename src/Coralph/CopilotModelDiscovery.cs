@@ -133,7 +133,7 @@ internal static class CopilotModelDiscovery
                                     : new ModelVisionLimitsDto(
                                         model.Capabilities.Limits.Vision.SupportedMediaTypes,
                                         model.Capabilities.Limits.Vision.MaxPromptImages,
-                                        model.Capabilities.Limits.Vision.MaxPromptImageSize)))),
+                                        model.Capabilities.Limits.Vision.MaxPromptImageSize))),
                 model.Policy is null
                     ? null
                     : new ModelPolicyDto(model.Policy.State, model.Policy.Terms),
