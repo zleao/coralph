@@ -90,6 +90,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
 {
     var ct = CancellationToken.None;
     var emittedCopilotDiagnostics = false;
+    var fileCache = FileContentCache.Shared;
 
     var inDockerSandbox = string.Equals(Environment.GetEnvironmentVariable(DockerSandbox.SandboxFlagEnv), "1", StringComparison.Ordinal);
     var combinedPromptFile = Environment.GetEnvironmentVariable(DockerSandbox.CombinedPromptEnv);
@@ -202,6 +203,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
         ConsoleOutput.WriteLine("Refreshing issues from GitHub...");
         var issuesJson = await GhIssues.FetchOpenIssuesJsonAsync(opt.Repo, ct);
         await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
+        fileCache.Invalidate(opt.IssuesFile);
     }
     else if (opt.RefreshIssuesAzdo)
     {
@@ -210,15 +212,14 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
         ConsoleOutput.WriteLine("Refreshing work items from Azure Boards...");
         var issuesJson = await AzBoards.FetchOpenWorkItemsJsonAsync(opt.AzdoOrganization, opt.AzdoProject, ct);
         await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
+        fileCache.Invalidate(opt.IssuesFile);
     }
 
     var promptTemplate = await File.ReadAllTextAsync(opt.PromptFile, ct);
-    var issues = File.Exists(opt.IssuesFile)
-        ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
-        : "[]";
-    var progress = File.Exists(opt.ProgressFile)
-        ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
-        : string.Empty;
+    var issuesRead = await fileCache.TryReadTextAsync(opt.IssuesFile, ct);
+    var issues = issuesRead.Exists ? issuesRead.Content : "[]";
+    var progressRead = await fileCache.TryReadTextAsync(opt.ProgressFile, ct);
+    var progress = progressRead.Exists ? progressRead.Content : string.Empty;
 
     if (!PromptHelpers.TryGetHasOpenIssues(issues, out var hasOpenIssues, out var issuesError))
     {
@@ -266,12 +267,10 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                 ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
 
                 // Reload progress and issues before each iteration so assistant sees updates it made
-                progress = File.Exists(opt.ProgressFile)
-                    ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
-                    : string.Empty;
-                issues = File.Exists(opt.IssuesFile)
-                    ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
-                    : "[]";
+                progressRead = await fileCache.TryReadTextAsync(opt.ProgressFile, ct);
+                progress = progressRead.Exists ? progressRead.Content : string.Empty;
+                issuesRead = await fileCache.TryReadTextAsync(opt.IssuesFile, ct);
+                issues = issuesRead.Exists ? issuesRead.Content : "[]";
 
                 var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress);
 

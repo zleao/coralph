@@ -33,12 +33,13 @@ internal static class CustomTools
 
     internal static async Task<object> ListOpenIssuesAsync(string issuesFile, bool includeClosed)
     {
-        if (!File.Exists(issuesFile))
+        var issuesRead = await FileContentCache.Shared.TryReadTextAsync(issuesFile);
+        if (!issuesRead.Exists)
         {
             return new { error = "issues.json not found", issues = Array.Empty<object>() };
         }
 
-        var json = await File.ReadAllTextAsync(issuesFile);
+        var json = issuesRead.Content;
         using var doc = JsonDocument.Parse(json);
         var issues = new List<object>();
 
@@ -74,12 +75,13 @@ internal static class CustomTools
 
     internal static async Task<object> GetProgressSummaryAsync(string progressFile, int count)
     {
-        if (!File.Exists(progressFile))
+        var progressRead = await FileContentCache.Shared.TryReadTextAsync(progressFile);
+        if (!progressRead.Exists)
         {
             return new { error = "progress.txt not found", entries = Array.Empty<string>() };
         }
 
-        var content = await File.ReadAllTextAsync(progressFile);
+        var content = progressRead.Content;
         if (string.IsNullOrWhiteSpace(content))
         {
             return new { message = "progress.txt is empty", entries = Array.Empty<string>() };
@@ -94,7 +96,8 @@ internal static class CustomTools
 
     internal static async Task<object> SearchProgressAsync(string progressFile, string searchTerm)
     {
-        if (!File.Exists(progressFile))
+        var progressRead = await FileContentCache.Shared.TryReadTextAsync(progressFile);
+        if (!progressRead.Exists)
         {
             return new { error = "progress.txt not found", matches = Array.Empty<string>() };
         }
@@ -104,7 +107,7 @@ internal static class CustomTools
             return new { error = "searchTerm cannot be empty", matches = Array.Empty<string>() };
         }
 
-        var content = await File.ReadAllTextAsync(progressFile);
+        var content = progressRead.Content;
         var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         var matches = lines.Where(line => line.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
             .ToArray();
@@ -112,4 +115,3 @@ internal static class CustomTools
         return new { searchTerm, matchCount = matches.Length, matches };
     }
 }
-

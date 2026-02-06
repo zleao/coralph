@@ -6,18 +6,29 @@ namespace Coralph;
 internal sealed class EventStreamWriter
 {
     internal const int SchemaVersion = 1;
+    private const int FlushBatchSize = 32;
+    private static readonly HashSet<string> ImmediateFlushTypes = new(StringComparer.Ordinal)
+    {
+        "session",
+        "turn_end",
+        "agent_end",
+        "event_error"
+    };
 
     private readonly TextWriter _writer;
     private readonly object _lock = new();
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly bool _flushEachEvent;
     private long _sequence;
+    private int _pendingWritesSinceFlush;
 
-    internal EventStreamWriter(TextWriter writer, string sessionId, int version = SchemaVersion, bool leaveOpen = true)
+    internal EventStreamWriter(TextWriter writer, string sessionId, int version = SchemaVersion, bool leaveOpen = true, bool flushEachEvent = false)
     {
         _writer = writer ?? throw new ArgumentNullException(nameof(writer));
         SessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
         Version = version;
         LeaveOpen = leaveOpen;
+        _flushEachEvent = flushEachEvent;
 
         _jsonOptions = new JsonSerializerOptions
         {
@@ -114,7 +125,33 @@ internal sealed class EventStreamWriter
         lock (_lock)
         {
             _writer.WriteLine(json);
-            _writer.Flush();
+            _pendingWritesSinceFlush++;
+
+            if (ShouldFlush(payload))
+            {
+                _writer.Flush();
+                _pendingWritesSinceFlush = 0;
+            }
         }
+    }
+
+    private bool ShouldFlush(Dictionary<string, object?> payload)
+    {
+        if (_flushEachEvent)
+        {
+            return true;
+        }
+
+        if (_pendingWritesSinceFlush >= FlushBatchSize)
+        {
+            return true;
+        }
+
+        if (payload.TryGetValue("type", out var typeObj) && typeObj is string type)
+        {
+            return ImmediateFlushTypes.Contains(type);
+        }
+
+        return false;
     }
 }

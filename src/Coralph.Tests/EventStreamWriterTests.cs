@@ -42,4 +42,47 @@ public class EventStreamWriterTests
         Assert.Equal("msg-1", root.GetProperty("messageId").GetString());
         Assert.Equal("hello", root.GetProperty("delta").GetString());
     }
+
+    [Fact]
+    public void Emit_DoesNotFlushOnEveryEventByDefault()
+    {
+        var trackingWriter = new TrackingWriter();
+        var writer = new EventStreamWriter(trackingWriter, "session-789");
+
+        writer.Emit("message_update", turn: 1, fields: new Dictionary<string, object?>
+        {
+            ["delta"] = "chunk"
+        });
+
+        Assert.Equal(0, trackingWriter.FlushCount);
+    }
+
+    [Fact]
+    public void Emit_FlushesOnTurnEndBoundary()
+    {
+        var trackingWriter = new TrackingWriter();
+        var writer = new EventStreamWriter(trackingWriter, "session-101");
+
+        writer.Emit("message_update", turn: 1, fields: new Dictionary<string, object?>
+        {
+            ["delta"] = "chunk"
+        });
+        writer.Emit("turn_end", turn: 1, fields: new Dictionary<string, object?>
+        {
+            ["success"] = true
+        });
+
+        Assert.Equal(1, trackingWriter.FlushCount);
+    }
+
+    private sealed class TrackingWriter : StringWriter
+    {
+        internal int FlushCount { get; private set; }
+
+        public override void Flush()
+        {
+            FlushCount++;
+            base.Flush();
+        }
+    }
 }

@@ -207,7 +207,7 @@ internal sealed class CopilotSessionEventRouter
             return;
         }
 
-        Emit("copilot_session_end", fields: new Dictionary<string, object?>
+        Emit("copilot_session_end", fields: _eventStream is null ? null : new Dictionary<string, object?>
         {
             ["copilotSessionId"] = _copilotSessionId,
             ["reason"] = reason
@@ -221,7 +221,7 @@ internal sealed class CopilotSessionEventRouter
         {
             case SessionStartEvent sessionStart:
                 _copilotSessionId = sessionStart.Data.SessionId;
-                Emit("copilot_session_start", fields: new Dictionary<string, object?>
+                Emit("copilot_session_start", fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["copilotSessionId"] = sessionStart.Data.SessionId,
                     ["selectedModel"] = sessionStart.Data.SelectedModel,
@@ -232,13 +232,13 @@ internal sealed class CopilotSessionEventRouter
                 }, state: state);
                 break;
             case AssistantTurnStartEvent assistantTurnStart:
-                Emit("assistant_turn_start", fields: new Dictionary<string, object?>
+                Emit("assistant_turn_start", fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["assistantTurnId"] = assistantTurnStart.Data.TurnId
                 }, state: state);
                 break;
             case AssistantTurnEndEvent assistantTurnEnd:
-                Emit("assistant_turn_end", fields: new Dictionary<string, object?>
+                Emit("assistant_turn_end", fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["assistantTurnId"] = assistantTurnEnd.Data.TurnId
                 }, state: state);
@@ -251,7 +251,7 @@ internal sealed class CopilotSessionEventRouter
                 {
                     var messageId = ResolveAssistantMessageId(state, delta.Data.MessageId);
                     EnsureAssistantMessageStart(state, messageId, delta.Data.ParentToolCallId);
-                    Emit("message_update", messageId: messageId, fields: new Dictionary<string, object?>
+                    Emit("message_update", messageId: messageId, fields: _eventStream is null ? null : new Dictionary<string, object?>
                     {
                         ["message"] = new Dictionary<string, object?>
                         {
@@ -290,7 +290,7 @@ internal sealed class CopilotSessionEventRouter
                 {
                     var reasoningId = ResolveReasoningId(state, reasoning.Data.ReasoningId);
                     EnsureReasoningMessageStart(state, reasoningId);
-                    Emit("message_update", messageId: reasoningId, fields: new Dictionary<string, object?>
+                    Emit("message_update", messageId: reasoningId, fields: _eventStream is null ? null : new Dictionary<string, object?>
                     {
                         ["message"] = new Dictionary<string, object?>
                         {
@@ -325,7 +325,7 @@ internal sealed class CopilotSessionEventRouter
                 }
                 state.ToolNamesByCallId[toolStart.Data.ToolCallId] = toolStart.Data.ToolName;
                 state.ToolParentByCallId[toolStart.Data.ToolCallId] = toolStart.Data.ParentToolCallId;
-                Emit("tool_execution_start", toolCallId: toolStart.Data.ToolCallId, fields: new Dictionary<string, object?>
+                Emit("tool_execution_start", toolCallId: toolStart.Data.ToolCallId, fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["toolName"] = toolStart.Data.ToolName,
                     ["args"] = toolStart.Data.Arguments,
@@ -347,7 +347,7 @@ internal sealed class CopilotSessionEventRouter
                     break;
                 }
                 state.ToolNamesByCallId.TryGetValue(toolProgress.Data.ToolCallId, out var progressToolName);
-                Emit("tool_execution_update", toolCallId: toolProgress.Data.ToolCallId, fields: new Dictionary<string, object?>
+                Emit("tool_execution_update", toolCallId: toolProgress.Data.ToolCallId, fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["toolName"] = progressToolName,
                     ["updateType"] = "progress",
@@ -360,7 +360,7 @@ internal sealed class CopilotSessionEventRouter
                     break;
                 }
                 state.ToolNamesByCallId.TryGetValue(toolPartial.Data.ToolCallId, out var partialToolName);
-                Emit("tool_execution_update", toolCallId: toolPartial.Data.ToolCallId, fields: new Dictionary<string, object?>
+                Emit("tool_execution_update", toolCallId: toolPartial.Data.ToolCallId, fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["toolName"] = partialToolName,
                     ["updateType"] = "partial_result",
@@ -374,7 +374,7 @@ internal sealed class CopilotSessionEventRouter
                 }
                 state.ToolNamesByCallId.TryGetValue(toolComplete.Data.ToolCallId, out var completeToolName);
                 state.ToolParentByCallId.TryGetValue(toolComplete.Data.ToolCallId, out var completeParentToolCallId);
-                Emit("tool_execution_end", toolCallId: toolComplete.Data.ToolCallId, fields: new Dictionary<string, object?>
+                Emit("tool_execution_end", toolCallId: toolComplete.Data.ToolCallId, fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["toolName"] = completeToolName,
                     ["success"] = toolComplete.Data.Success,
@@ -409,7 +409,7 @@ internal sealed class CopilotSessionEventRouter
                 Emit("compaction_start", state: state);
                 break;
             case SessionCompactionCompleteEvent compaction:
-                Emit("compaction_end", fields: new Dictionary<string, object?>
+                Emit("compaction_end", fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["success"] = compaction.Data.Success,
                     ["error"] = compaction.Data.Error,
@@ -422,7 +422,7 @@ internal sealed class CopilotSessionEventRouter
                 }, state: state);
                 break;
             case SessionSnapshotRewindEvent rewind:
-                Emit("retry", fields: new Dictionary<string, object?>
+                Emit("retry", fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["reason"] = "snapshot_rewind",
                     ["eventsRemoved"] = rewind.Data.EventsRemoved,
@@ -430,7 +430,7 @@ internal sealed class CopilotSessionEventRouter
                 }, state: state);
                 break;
             case SessionUsageInfoEvent sessionUsage:
-                Emit("session_usage", fields: new Dictionary<string, object?>
+                Emit("session_usage", fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["currentTokens"] = sessionUsage.Data.CurrentTokens,
                     ["tokenLimit"] = sessionUsage.Data.TokenLimit,
@@ -438,7 +438,7 @@ internal sealed class CopilotSessionEventRouter
                 }, state: state);
                 break;
             case AssistantUsageEvent assistantUsage:
-                Emit("usage", fields: new Dictionary<string, object?>
+                Emit("usage", fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["apiCallId"] = assistantUsage.Data.ApiCallId,
                     ["providerCallId"] = assistantUsage.Data.ProviderCallId,
@@ -462,7 +462,7 @@ internal sealed class CopilotSessionEventRouter
                     var messageEvent = (AssistantMessageEvent)evt;
                     var messageId = ResolveAssistantMessageId(state, messageEvent.Data.MessageId);
                     EnsureAssistantMessageStart(state, messageId, messageEvent.Data.ParentToolCallId);
-                    Emit("message_end", messageId: messageId, fields: new Dictionary<string, object?>
+                    Emit("message_end", messageId: messageId, fields: _eventStream is null ? null : new Dictionary<string, object?>
                     {
                         ["message"] = new Dictionary<string, object?>
                         {
@@ -489,7 +489,7 @@ internal sealed class CopilotSessionEventRouter
                     var reasoningEvent = (AssistantReasoningEvent)evt;
                     var reasoningId = ResolveReasoningId(state, reasoningEvent.Data.ReasoningId);
                     EnsureReasoningMessageStart(state, reasoningId);
-                    Emit("message_end", messageId: reasoningId, fields: new Dictionary<string, object?>
+                    Emit("message_end", messageId: reasoningId, fields: _eventStream is null ? null : new Dictionary<string, object?>
                     {
                         ["message"] = new Dictionary<string, object?>
                         {
@@ -505,7 +505,7 @@ internal sealed class CopilotSessionEventRouter
                 state.InAssistantMode = false;
                 break;
             case SessionErrorEvent err:
-                Emit("session_error", fields: new Dictionary<string, object?>
+                Emit("session_error", fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["errorType"] = err.Data.ErrorType,
                     ["message"] = err.Data.Message,
@@ -519,7 +519,7 @@ internal sealed class CopilotSessionEventRouter
             case SessionIdleEvent:
                 if (_emitSessionEndOnIdle)
                 {
-                    Emit("copilot_session_end", fields: new Dictionary<string, object?>
+                    Emit("copilot_session_end", fields: _eventStream is null ? null : new Dictionary<string, object?>
                     {
                         ["copilotSessionId"] = _copilotSessionId,
                         ["reason"] = "idle"
@@ -527,7 +527,7 @@ internal sealed class CopilotSessionEventRouter
                 }
                 else
                 {
-                    Emit("copilot_session_idle", fields: new Dictionary<string, object?>
+                    Emit("copilot_session_idle", fields: _eventStream is null ? null : new Dictionary<string, object?>
                     {
                         ["copilotSessionId"] = _copilotSessionId,
                         ["reason"] = "idle"
@@ -617,7 +617,7 @@ internal sealed class CopilotSessionEventRouter
             return;
         }
 
-        Emit("message_start", messageId: messageId, fields: new Dictionary<string, object?>
+        Emit("message_start", messageId: messageId, fields: _eventStream is null ? null : new Dictionary<string, object?>
         {
             ["message"] = new Dictionary<string, object?>
             {
@@ -635,7 +635,7 @@ internal sealed class CopilotSessionEventRouter
             return;
         }
 
-        Emit("message_start", messageId: reasoningId, fields: new Dictionary<string, object?>
+        Emit("message_start", messageId: reasoningId, fields: _eventStream is null ? null : new Dictionary<string, object?>
         {
             ["message"] = new Dictionary<string, object?>
             {
