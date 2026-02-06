@@ -3,19 +3,23 @@
 Issues JSON is provided at start of context. Parse it to get **OPEN** issues
 with their bodies and comments.
 
+`GENERATED_TASKS_JSON` is also provided. It contains persisted task splits for
+the open issues. Treat it as the primary backlog for this loop.
+
 **If there are no open issues, output "NO_OPEN_ISSUES" and stop immediately.**
 
 # TASK BREAKDOWN
 
-Break down the issues into tasks. An issue may contain a single task (a small
-bugfix or visual tweak) or many, many tasks (a PRD or a large refactor).
+Use `GENERATED_TASKS_JSON` as the default task split. If an issue appears to be
+under-split, propose finer-grained follow-up tasks in your summary.
 
 Make each task the smallest possible unit of work. We don't want to outrun our
 headlights. Aim for one small change per task.
 
 # TASK SELECTION
 
-Pick the next task. Prioritize tasks in this order:
+Pick the next task from `GENERATED_TASKS_JSON` where status is `open` (or
+`in_progress`). Prioritize tasks in this order:
 
 1. Critical bugfixes
 2. Tracer bullets for new features
@@ -32,8 +36,8 @@ TL;DR - build a tiny, end-to-end slice of the feature first, then expand it out.
 3. Polish and quick wins
 4. Refactors
 
-**If no tasks remain from open issues, output "ALL_TASKS_COMPLETE" and stop
-immediately.**
+**If no tasks remain from open issues in `GENERATED_TASKS_JSON`, output
+"ALL_TASKS_COMPLETE" and stop immediately.**
 
 # PRE-FLIGHT CHECK
 
@@ -45,6 +49,7 @@ Before starting work:
    commits and progress.txt)
 3. If already done or issue is closed, skip to the next open issue or output
    "ALL_TASKS_COMPLETE"
+4. Mark the selected task as `in_progress` in `generated_tasks.json`
 
 # EXPLORATION
 
@@ -60,6 +65,9 @@ refactor first), output "HANG_ON_A_SECOND".
 
 Then, find a way to break it into smaller chunks and only do that chunk (i.e.
 complete the smaller refactor).
+
+When the task is completed in this iteration, mark it `done` in
+`generated_tasks.json`. Leave any remaining tasks as `open`.
 
 # FEEDBACK LOOPS
 
@@ -110,7 +118,7 @@ If the issue is not complete, leave a comment explaining what was done and what 
 
 # FINAL RULES
 
-- ONLY WORK ON A SINGLE TASK PER ITERATION
+- ONLY WORK ON A SINGLE GENERATED TASK PER ITERATION
 - After completing one issue, DO NOT output COMPLETE - instead, the loop will
   continue and you will work on the next open issue in the next iteration
 - Do NOT re-work already completed/closed issues
@@ -120,11 +128,11 @@ If the issue is not complete, leave a comment explaining what was done and what 
 
 # OUTPUT_RULES
 
-- Work on ONE issue per iteration. Make real changes to files.
+- Work on ONE generated task per iteration. Make real changes to files.
 - After making changes, summarize what you did and what remains.
 - Only output <promise>COMPLETE</promise> when ALL of these are true:
   1. You made changes in THIS iteration (not just reviewed code)
-  2. EVERY issue in ISSUES_JSON has been addressed (not just the current one)
+  2. EVERY task in GENERATED_TASKS_JSON is done (not just the current one)
   3. There is genuinely no remaining work across ALL issues
   4. progress.txt has been updated AND committed (verify with `git status`)
 - If you completed one issue but others remain open, do NOT output COMPLETE

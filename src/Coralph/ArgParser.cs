@@ -22,6 +22,7 @@ internal static class ArgParser
         var promptFileOption = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
         var progressFileOption = new Option<string?>("--progress-file", "Progress file (default: progress.txt)");
         var issuesFileOption = new Option<string?>("--issues-file", "Issues json file (default: issues.json)");
+        var generatedTasksFileOption = new Option<string?>("--generated-tasks-file", "Generated tasks backlog file (default: generated_tasks.json)");
         var refreshIssuesOption = new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`");
         var repoOption = new Option<string?>("--repo", "Optional repo override for gh");
         var refreshIssuesAzdoOption = new Option<bool>("--refresh-issues-azdo", "Refresh issues.json from Azure Boards via `az boards`");
@@ -53,6 +54,7 @@ internal static class ArgParser
         root.AddOption(promptFileOption);
         root.AddOption(progressFileOption);
         root.AddOption(issuesFileOption);
+        root.AddOption(generatedTasksFileOption);
         root.AddOption(refreshIssuesOption);
         root.AddOption(repoOption);
         root.AddOption(refreshIssuesAzdoOption);
@@ -142,6 +144,19 @@ internal static class ArgParser
             else
             {
                 options.IssuesFile = issuesFile;
+            }
+        }
+
+        var generatedTasksFile = result.GetValueForOption(generatedTasksFileOption);
+        if (generatedTasksFile is not null)
+        {
+            if (string.IsNullOrWhiteSpace(generatedTasksFile))
+            {
+                errorMessages.Add("--generated-tasks-file is required");
+            }
+            else
+            {
+                options.GeneratedTasksFile = generatedTasksFile;
             }
         }
 
@@ -345,6 +360,7 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)"));
         root.AddOption(new Option<string?>("--progress-file", "Progress file (default: progress.txt)"));
         root.AddOption(new Option<string?>("--issues-file", "Issues json file (default: issues.json)"));
+        root.AddOption(new Option<string?>("--generated-tasks-file", "Generated tasks backlog file (default: generated_tasks.json)"));
         root.AddOption(new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`"));
         root.AddOption(new Option<string?>("--repo", "Optional repo override for gh"));
         root.AddOption(new Option<bool>("--refresh-issues-azdo", "Refresh issues.json from Azure Boards via `az boards`"));

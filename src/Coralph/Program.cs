@@ -220,6 +220,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
     var issues = issuesRead.Exists ? issuesRead.Content : "[]";
     var progressRead = await fileCache.TryReadTextAsync(opt.ProgressFile, ct);
     var progress = progressRead.Exists ? progressRead.Content : string.Empty;
+    string generatedTasks;
 
     if (!PromptHelpers.TryGetHasOpenIssues(issues, out var hasOpenIssues, out var issuesError))
     {
@@ -271,8 +272,9 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                 progress = progressRead.Exists ? progressRead.Content : string.Empty;
                 issuesRead = await fileCache.TryReadTextAsync(opt.IssuesFile, ct);
                 issues = issuesRead.Exists ? issuesRead.Content : "[]";
+                generatedTasks = await TaskBacklog.EnsureBacklogAsync(issues, opt.GeneratedTasksFile, ct);
 
-                var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress);
+                var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, generatedTasks);
 
                 string output;
                 string? turnError = null;

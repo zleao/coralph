@@ -118,7 +118,7 @@ dotnet run --project src/Coralph -- --max-iterations 5 --stream-events true 1>ev
 dotnet run --project src/Coralph -- --max-iterations 5 --tool-deny bash,read_file
 
 # allow only specific tool/permission kinds (everything else denied)
-dotnet run --project src/Coralph -- --max-iterations 5 --tool-allow list_open_issues,search_progress
+dotnet run --project src/Coralph -- --max-iterations 5 --tool-allow list_open_issues,list_generated_tasks,search_progress
 
 # run loop inside Docker for isolation (requires Docker)
 dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true
@@ -152,7 +152,7 @@ dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --d
 # {
 #   "LoopOptions": {
 #     "DockerImage": "coralph-dotnet-copilot:10.0",
-#     "ToolAllow": [ "list_open_issues", "get_progress_summary", "search_progress" ],
+#     "ToolAllow": [ "list_open_issues", "list_generated_tasks", "get_progress_summary", "search_progress" ],
 #     "ToolDeny": [ "bash" ]
 #   }
 # }
@@ -254,6 +254,7 @@ dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --d
 Built-in domain-specific tools available to the assistant:
 
 - `list_open_issues`: Query issues from issues.json
+- `list_generated_tasks`: Query persisted decomposed tasks from generated_tasks.json
 - `get_progress_summary`: Retrieve recent progress entries
 - `search_progress`: Search progress.txt for specific terms
 
@@ -271,6 +272,7 @@ Coralph uses several files in your repository to manage the development loop:
 - **`prompt.md`**: Instructions for the AI assistant on how to work with your
   codebase
 - **`issues.json`**: Cached GitHub issues (refreshed via `--refresh-issues`)
+- **`generated_tasks.json`**: Persisted task backlog generated from open issues (including long PRD-style issues)
 - **`progress.txt`**: Append-only log of completed work and learnings
 - **`coralph.config.json`**: Optional configuration overrides
 

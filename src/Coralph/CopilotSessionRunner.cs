@@ -48,7 +48,7 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
             await client.StartAsync();
             started = true;
 
-            var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile);
+            var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile, opt.GeneratedTasksFile);
             var permissionPolicy = new PermissionPolicy(opt, eventStream);
 
             session = await client.CreateSessionAsync(new SessionConfig

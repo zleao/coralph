@@ -129,6 +129,7 @@ internal static class DockerSandbox
         var promptContainerPath = MapPathToContainer(repoRoot, opt.PromptFile, "Prompt file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: true);
         var progressContainerPath = MapPathToContainer(repoRoot, opt.ProgressFile, "Progress file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: false);
         var issuesContainerPath = MapPathToContainer(repoRoot, opt.IssuesFile, "Issues file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: true);
+        var generatedTasksContainerPath = MapPathToContainer(repoRoot, opt.GeneratedTasksFile, "Generated tasks file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: false);
         string? cliContainerPath = null;
         if (!string.IsNullOrWhiteSpace(opt.CliPath))
         {
@@ -170,6 +171,8 @@ internal static class DockerSandbox
         output.Append(Quote(progressContainerPath));
         output.Append(" --issues-file ");
         output.Append(Quote(issuesContainerPath));
+        output.Append(" --generated-tasks-file ");
+        output.Append(Quote(generatedTasksContainerPath));
         output.Append(" --model ");
         output.Append(Quote(opt.Model));
         output.Append(" --show-reasoning ");

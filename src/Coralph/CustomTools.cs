@@ -6,7 +6,7 @@ namespace Coralph;
 
 internal static class CustomTools
 {
-    internal static AIFunction[] GetDefaultTools(string issuesFile, string progressFile)
+    internal static AIFunction[] GetDefaultTools(string issuesFile, string progressFile, string generatedTasksFile)
     {
         return
         [
@@ -15,6 +15,12 @@ internal static class CustomTools
                     ListOpenIssuesAsync(issuesFile, includeClosed ?? false),
                 "list_open_issues",
                 "List all open issues from issues.json with their number, title, body, and state"
+            ),
+            AIFunctionFactory.Create(
+                ([Description("Include completed tasks in results")] bool? includeCompleted) =>
+                    ListGeneratedTasksAsync(generatedTasksFile, includeCompleted ?? false),
+                "list_generated_tasks",
+                "List generated tasks from generated_tasks.json with their status"
             ),
             AIFunctionFactory.Create(
                 ([Description("Number of recent entries to return")] int? count) =>
@@ -71,6 +77,75 @@ internal static class CustomTools
         }
 
         return new { count = issues.Count, issues };
+    }
+
+    internal static async Task<object> ListGeneratedTasksAsync(string generatedTasksFile, bool includeCompleted)
+    {
+        var tasksRead = await FileContentCache.Shared.TryReadTextAsync(generatedTasksFile);
+        if (!tasksRead.Exists)
+        {
+            return new { error = "generated_tasks.json not found", tasks = Array.Empty<object>() };
+        }
+
+        var json = tasksRead.Content;
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        JsonElement tasksArray;
+        if (root.ValueKind == JsonValueKind.Array)
+        {
+            tasksArray = root;
+        }
+        else if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("tasks", out var tasksProp) && tasksProp.ValueKind == JsonValueKind.Array)
+        {
+            tasksArray = tasksProp;
+        }
+        else
+        {
+            return new { error = "generated_tasks.json has an unexpected format", tasks = Array.Empty<object>() };
+        }
+
+        var tasks = new List<object>();
+        foreach (var task in tasksArray.EnumerateArray())
+        {
+            if (task.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            var status = task.TryGetProperty("status", out var statusProp) && statusProp.ValueKind == JsonValueKind.String
+                ? statusProp.GetString() ?? "open"
+                : "open";
+            var normalizedStatus = status.Trim().ToLowerInvariant();
+
+            if (!includeCompleted && (normalizedStatus == "done" || normalizedStatus == "completed" || normalizedStatus == "complete"))
+            {
+                continue;
+            }
+
+            var id = task.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.String
+                ? idProp.GetString()
+                : string.Empty;
+            var issueNumber = task.TryGetProperty("issueNumber", out var issueNumberProp) && issueNumberProp.TryGetInt32(out var parsedIssueNumber)
+                ? parsedIssueNumber
+                : 0;
+            var title = task.TryGetProperty("title", out var titleProp) && titleProp.ValueKind == JsonValueKind.String
+                ? titleProp.GetString()
+                : string.Empty;
+            var description = task.TryGetProperty("description", out var descriptionProp) && descriptionProp.ValueKind == JsonValueKind.String
+                ? descriptionProp.GetString()
+                : string.Empty;
+            var origin = task.TryGetProperty("origin", out var originProp) && originProp.ValueKind == JsonValueKind.String
+                ? originProp.GetString()
+                : string.Empty;
+            var order = task.TryGetProperty("order", out var orderProp) && orderProp.TryGetInt32(out var parsedOrder)
+                ? parsedOrder
+                : 0;
+
+            tasks.Add(new { id, issueNumber, title, description, status = normalizedStatus, origin, order });
+        }
+
+        return new { count = tasks.Count, tasks };
     }
 
     internal static async Task<object> GetProgressSummaryAsync(string progressFile, int count)

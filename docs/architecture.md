@@ -92,7 +92,7 @@ flowchart TD
 | Component | Responsibility |
 |-----------|----------------|
 | **ConsoleOutput.cs** | Provides colored/styled console output with Spectre.Console |
-| **CustomTools.cs** | Exposes AI-callable functions (list_open_issues, get_progress_summary, search_progress) |
+| **CustomTools.cs** | Exposes AI-callable functions (list_open_issues, list_generated_tasks, get_progress_summary, search_progress) |
 | **GhIssues.cs** | Fetches issues from GitHub using `gh` CLI |
 
 ## Data Flow
@@ -107,7 +107,7 @@ sequenceDiagram
     participant Files as File System
 
     User->>CLI: coralph --max-iterations 10
-    CLI->>Files: Load prompt.md, issues.json, progress.txt
+    CLI->>Files: Load prompt.md, issues.json, generated_tasks.json, progress.txt
     CLI->>Runner: RunOnceAsync(combinedPrompt)
     
     loop Each Iteration
@@ -115,7 +115,7 @@ sequenceDiagram
         SDK->>Runner: Streaming events (delta, tool calls)
         
         opt Tool Execution
-            SDK->>Tools: list_open_issues / get_progress_summary
+            SDK->>Tools: list_open_issues / list_generated_tasks / get_progress_summary
             Tools->>Files: Read issues.json / progress.txt
             Tools-->>SDK: Return results
         end
@@ -143,6 +143,7 @@ sequenceDiagram
 |------|---------|----------|
 | `prompt.md` | Instructions template for the AI assistant | Yes |
 | `issues.json` | GitHub issues to process (can be refreshed with `--refresh-issues`) | Yes (can be empty `[]`) |
+| `generated_tasks.json` | Persisted task backlog generated from issues | No (created if missing) |
 | `progress.txt` | Learning journal tracking completed work | No (created if missing) |
 | `coralph.config.json` | Configuration overrides | No (uses defaults) |
 

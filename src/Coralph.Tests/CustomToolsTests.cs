@@ -8,6 +8,7 @@ public class CustomToolsTests : IDisposable
     private readonly string _tempDir;
     private readonly string _issuesFile;
     private readonly string _progressFile;
+    private readonly string _generatedTasksFile;
 
     public CustomToolsTests()
     {
@@ -15,6 +16,7 @@ public class CustomToolsTests : IDisposable
         Directory.CreateDirectory(_tempDir);
         _issuesFile = Path.Combine(_tempDir, "issues.json");
         _progressFile = Path.Combine(_tempDir, "progress.txt");
+        _generatedTasksFile = Path.Combine(_tempDir, "generated_tasks.json");
     }
 
     public void Dispose()
@@ -26,25 +28,33 @@ public class CustomToolsTests : IDisposable
     private static string Serialize(object obj) => JsonSerializer.Serialize(obj);
 
     [Fact]
-    public void GetDefaultTools_ReturnsThreeTools()
+    public void GetDefaultTools_ReturnsFourTools()
     {
-        var tools = CustomTools.GetDefaultTools(_issuesFile, _progressFile);
+        var tools = CustomTools.GetDefaultTools(_issuesFile, _progressFile, _generatedTasksFile);
 
-        Assert.Equal(3, tools.Length);
+        Assert.Equal(4, tools.Length);
     }
 
     [Fact]
     public void GetDefaultTools_ContainsListOpenIssues()
     {
-        var tools = CustomTools.GetDefaultTools(_issuesFile, _progressFile);
+        var tools = CustomTools.GetDefaultTools(_issuesFile, _progressFile, _generatedTasksFile);
 
         Assert.Contains(tools, t => t.Name == "list_open_issues");
     }
 
     [Fact]
+    public void GetDefaultTools_ContainsListGeneratedTasks()
+    {
+        var tools = CustomTools.GetDefaultTools(_issuesFile, _progressFile, _generatedTasksFile);
+
+        Assert.Contains(tools, t => t.Name == "list_generated_tasks");
+    }
+
+    [Fact]
     public void GetDefaultTools_ContainsGetProgressSummary()
     {
-        var tools = CustomTools.GetDefaultTools(_issuesFile, _progressFile);
+        var tools = CustomTools.GetDefaultTools(_issuesFile, _progressFile, _generatedTasksFile);
 
         Assert.Contains(tools, t => t.Name == "get_progress_summary");
     }
@@ -52,7 +62,7 @@ public class CustomToolsTests : IDisposable
     [Fact]
     public void GetDefaultTools_ContainsSearchProgress()
     {
-        var tools = CustomTools.GetDefaultTools(_issuesFile, _progressFile);
+        var tools = CustomTools.GetDefaultTools(_issuesFile, _progressFile, _generatedTasksFile);
 
         Assert.Contains(tools, t => t.Name == "search_progress");
     }
@@ -113,6 +123,59 @@ public class CustomToolsTests : IDisposable
 
         var resultStr = Serialize(result);
         Assert.Contains("No State Issue", resultStr);
+    }
+
+    #endregion
+
+    #region ListGeneratedTasksAsync Tests
+
+    [Fact]
+    public async Task ListGeneratedTasksAsync_WithMissingFile_ReturnsError()
+    {
+        var result = await CustomTools.ListGeneratedTasksAsync(_generatedTasksFile, false);
+
+        var resultStr = Serialize(result);
+        Assert.Contains("generated_tasks.json not found", resultStr);
+    }
+
+    [Fact]
+    public async Task ListGeneratedTasksAsync_WithValidTasks_ReturnsOnlyOpenByDefault()
+    {
+        await File.WriteAllTextAsync(_generatedTasksFile, """
+            {
+              "version": 1,
+              "tasks": [
+                {"id": "1-001", "issueNumber": 1, "title": "Open Task", "description": "Do it", "status": "open", "origin": "list", "order": 1},
+                {"id": "1-002", "issueNumber": 1, "title": "Done Task", "description": "Done", "status": "done", "origin": "list", "order": 2}
+              ]
+            }
+            """);
+
+        var result = await CustomTools.ListGeneratedTasksAsync(_generatedTasksFile, false);
+
+        var resultStr = Serialize(result);
+        Assert.Contains("Open Task", resultStr);
+        Assert.DoesNotContain("Done Task", resultStr);
+    }
+
+    [Fact]
+    public async Task ListGeneratedTasksAsync_WithIncludeCompleted_ReturnsAllTasks()
+    {
+        await File.WriteAllTextAsync(_generatedTasksFile, """
+            {
+              "version": 1,
+              "tasks": [
+                {"id": "1-001", "issueNumber": 1, "title": "Open Task", "description": "Do it", "status": "open", "origin": "list", "order": 1},
+                {"id": "1-002", "issueNumber": 1, "title": "Done Task", "description": "Done", "status": "done", "origin": "list", "order": 2}
+              ]
+            }
+            """);
+
+        var result = await CustomTools.ListGeneratedTasksAsync(_generatedTasksFile, true);
+
+        var resultStr = Serialize(result);
+        Assert.Contains("Open Task", resultStr);
+        Assert.Contains("Done Task", resultStr);
     }
 
     #endregion

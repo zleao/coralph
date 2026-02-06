@@ -11,6 +11,7 @@ internal sealed class LoopOptions
     public string PromptFile { get; set; } = "prompt.md";
     public string ProgressFile { get; set; } = "progress.txt";
     public string IssuesFile { get; set; } = "issues.json";
+    public string GeneratedTasksFile { get; set; } = TaskBacklog.DefaultBacklogFile;
 
     public bool RefreshIssues { get; set; }
     public string? Repo { get; set; }
@@ -43,6 +44,7 @@ internal sealed class LoopOptionsOverrides
     public string? PromptFile { get; set; }
     public string? ProgressFile { get; set; }
     public string? IssuesFile { get; set; }
+    public string? GeneratedTasksFile { get; set; }
 
     public bool? RefreshIssues { get; set; }
     public string? Repo { get; set; }

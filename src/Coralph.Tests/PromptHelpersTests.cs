@@ -224,6 +224,15 @@ public class PromptHelpersTests
     }
 
     [Fact]
+    public void BuildCombinedPrompt_IncludesGeneratedTasks()
+    {
+        var prompt = PromptHelpers.BuildCombinedPrompt("template", "[]", "progress", """{"tasks":[{"id":"1-001"}]}""");
+
+        Assert.Contains("# GENERATED_TASKS_JSON", prompt);
+        Assert.Contains("\"id\":\"1-001\"", prompt);
+    }
+
+    [Fact]
     public void BuildCombinedPrompt_WithEmptyProgress_ShowsEmpty()
     {
         var prompt = PromptHelpers.BuildCombinedPrompt("template", "[]", "");
@@ -373,6 +382,7 @@ public class PromptHelpersTests
             PromptFile = "test.md",
             ProgressFile = "test-progress.txt",
             IssuesFile = "test-issues.json",
+            GeneratedTasksFile = "test-generated-tasks.json",
             RefreshIssues = true,
             Repo = "test/repo",
             CliPath = "/path/to/cli",
@@ -390,6 +400,7 @@ public class PromptHelpersTests
         Assert.Equal("test.md", options.PromptFile);
         Assert.Equal("test-progress.txt", options.ProgressFile);
         Assert.Equal("test-issues.json", options.IssuesFile);
+        Assert.Equal("test-generated-tasks.json", options.GeneratedTasksFile);
         Assert.True(options.RefreshIssues);
         Assert.Equal("test/repo", options.Repo);
         Assert.Equal("/path/to/cli", options.CliPath);

@@ -8,7 +8,7 @@ namespace Coralph;
 /// </summary>
 internal static class PromptHelpers
 {
-    internal static string BuildCombinedPrompt(string promptTemplate, string issuesJson, string progress)
+    internal static string BuildCombinedPrompt(string promptTemplate, string issuesJson, string progress, string? generatedTasksJson = null)
     {
         var sb = new StringBuilder();
 
@@ -19,6 +19,12 @@ internal static class PromptHelpers
         sb.AppendLine("# ISSUES_JSON");
         sb.AppendLine("```json");
         sb.AppendLine(issuesJson.Trim());
+        sb.AppendLine("```");
+        sb.AppendLine();
+
+        sb.AppendLine("# GENERATED_TASKS_JSON");
+        sb.AppendLine("```json");
+        sb.AppendLine(string.IsNullOrWhiteSpace(generatedTasksJson) ? "{\"version\":1,\"sourceIssueCount\":0,\"tasks\":[]}" : generatedTasksJson.Trim());
         sb.AppendLine("```");
         sb.AppendLine();
 
@@ -135,6 +141,7 @@ internal static class PromptHelpers
         if (!string.IsNullOrWhiteSpace(overrides.PromptFile)) target.PromptFile = overrides.PromptFile;
         if (!string.IsNullOrWhiteSpace(overrides.ProgressFile)) target.ProgressFile = overrides.ProgressFile;
         if (!string.IsNullOrWhiteSpace(overrides.IssuesFile)) target.IssuesFile = overrides.IssuesFile;
+        if (!string.IsNullOrWhiteSpace(overrides.GeneratedTasksFile)) target.GeneratedTasksFile = overrides.GeneratedTasksFile;
         if (overrides.RefreshIssues is { } refresh) target.RefreshIssues = refresh;
         if (!string.IsNullOrWhiteSpace(overrides.Repo)) target.Repo = overrides.Repo;
         if (overrides.RefreshIssuesAzdo is { } refreshAzdo) target.RefreshIssuesAzdo = refreshAzdo;

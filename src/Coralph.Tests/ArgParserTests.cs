@@ -142,6 +142,16 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithGeneratedTasksFile_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--generated-tasks-file", "custom-generated-tasks.json"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("custom-generated-tasks.json", overrides.GeneratedTasksFile);
+    }
+
+    [Fact]
     public void Parse_WithRefreshIssues_SetsFlag()
     {
         var (overrides, err, _, _, _, _) = ArgParser.Parse(["--refresh-issues"]);
@@ -288,6 +298,7 @@ public class ArgParserTests
         Assert.Contains("Coralph", output);
         Assert.Contains("--max-iterations", output);
         Assert.Contains("--model", output);
+        Assert.Contains("--generated-tasks-file", output);
         Assert.Contains("--refresh-issues-azdo", output);
         Assert.Contains("--azdo-organization", output);
         Assert.Contains("--azdo-project", output);
