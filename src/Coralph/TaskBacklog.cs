@@ -4,34 +4,34 @@ using System.Text.RegularExpressions;
 
 namespace Coralph;
 
-internal static class TaskBacklog
+internal static partial class TaskBacklog
 {
     internal const string DefaultBacklogFile = "generated_tasks.json";
 
     private const int MaxTasksPerIssue = 25;
     private const int LargeIssueBodyThreshold = 3000;
     private const int MinimumLargeIssueTaskCount = 8;
-    private static readonly Regex ChecklistLineRegex = new(
-        @"^\s*[-*+]\s*\[(?<done>[ xX])\]\s+(?<text>.+)$",
-        RegexOptions.Compiled);
-    private static readonly Regex HeadingLineRegex = new(
-        @"^\s{0,3}#{2,4}\s+(?<title>.+?)\s*$",
-        RegexOptions.Compiled);
-    private static readonly Regex ListLineRegex = new(
-        @"^\s*(?:[-*+]|(?:\d+\.))\s+(?<text>.+)$",
-        RegexOptions.Compiled);
-    private static readonly Regex MarkdownLinkRegex = new(
-        @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
-        RegexOptions.Compiled);
-    private static readonly Regex MarkdownFormattingRegex = new(
-        @"[`*_~]",
-        RegexOptions.Compiled);
-    private static readonly Regex WhitespaceRegex = new(
-        @"\s+",
-        RegexOptions.Compiled);
-    private static readonly Regex ListPrefixRegex = new(
-        @"^\s*(?:[-*+]|(?:\d+\.))\s+",
-        RegexOptions.Compiled);
+
+    [GeneratedRegex(@"^\s*[-*+]\s*\[(?<done>[ xX])\]\s+(?<text>.+)$")]
+    private static partial Regex ChecklistLineRegex();
+
+    [GeneratedRegex(@"^\s{0,3}#{2,4}\s+(?<title>.+?)\s*$")]
+    private static partial Regex HeadingLineRegex();
+
+    [GeneratedRegex(@"^\s*(?:[-*+]|(?:\d+\.))\s+(?<text>.+)$")]
+    private static partial Regex ListLineRegex();
+
+    [GeneratedRegex(@"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)")]
+    private static partial Regex MarkdownLinkRegex();
+
+    [GeneratedRegex(@"[`*_~]")]
+    private static partial Regex MarkdownFormattingRegex();
+
+    [GeneratedRegex(@"\s+")]
+    private static partial Regex WhitespaceRegex();
+
+    [GeneratedRegex(@"^\s*(?:[-*+]|(?:\d+\.))\s+")]
+    private static partial Regex ListPrefixRegex();
 
     private static readonly JsonSerializerOptions SerializeOptions = new()
     {
@@ -310,7 +310,7 @@ internal static class TaskBacklog
     {
         foreach (var line in SplitLines(body))
         {
-            var match = ChecklistLineRegex.Match(line);
+            var match = ChecklistLineRegex().Match(line);
             if (!match.Success)
             {
                 continue;
@@ -342,7 +342,7 @@ internal static class TaskBacklog
         var headings = new List<(string Title, int Index)>();
         for (var i = 0; i < lines.Length; i++)
         {
-            var match = HeadingLineRegex.Match(lines[i]);
+            var match = HeadingLineRegex().Match(lines[i]);
             if (!match.Success)
             {
                 continue;
@@ -376,12 +376,12 @@ internal static class TaskBacklog
     {
         foreach (var line in SplitLines(body))
         {
-            if (ChecklistLineRegex.IsMatch(line))
+            if (ChecklistLineRegex().IsMatch(line))
             {
                 continue;
             }
 
-            var match = ListLineRegex.Match(line);
+            var match = ListLineRegex().Match(line);
             if (!match.Success)
             {
                 continue;
@@ -572,7 +572,7 @@ internal static class TaskBacklog
         }
 
         var lines = SplitLines(sectionText)
-            .Select(line => ListPrefixRegex.Replace(line, string.Empty))
+            .Select(line => ListPrefixRegex().Replace(line, string.Empty))
             .Select(CleanTaskText)
             .Where(line => !string.IsNullOrWhiteSpace(line))
             .Take(3);
@@ -632,9 +632,9 @@ internal static class TaskBacklog
             return string.Empty;
         }
 
-        var clean = MarkdownLinkRegex.Replace(value, "${text}");
-        clean = MarkdownFormattingRegex.Replace(clean, string.Empty);
-        clean = WhitespaceRegex.Replace(clean, " ").Trim();
+        var clean = MarkdownLinkRegex().Replace(value, "${text}");
+        clean = MarkdownFormattingRegex().Replace(clean, string.Empty);
+        clean = WhitespaceRegex().Replace(clean, " ").Trim();
         clean = clean.Trim('-', ':', ';', '.', ',', ' ');
         return clean;
     }
@@ -689,7 +689,7 @@ internal static class TaskBacklog
             }
         }
 
-        return WhitespaceRegex.Replace(sb.ToString(), " ").Trim();
+        return WhitespaceRegex().Replace(sb.ToString(), " ").Trim();
     }
 
     private static string NormalizeStatus(string? status)

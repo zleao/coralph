@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
@@ -13,6 +14,8 @@ internal static class DockerSandbox
 {
     internal const string SandboxFlagEnv = "CORALPH_DOCKER_SANDBOX";
     internal const string CombinedPromptEnv = "CORALPH_COMBINED_PROMPT_FILE";
+
+    private static readonly SearchValues<char> QuoteChars = SearchValues.Create([' ', '"']);
 
     internal static async Task<DockerCheckResult> CheckDockerAsync(CancellationToken ct)
     {
@@ -315,7 +318,7 @@ internal static class DockerSandbox
     {
         if (string.IsNullOrEmpty(value))
             return "\"\"";
-        if (value.IndexOfAny([' ', '"']) >= 0)
+        if (value.AsSpan().IndexOfAny(QuoteChars) >= 0)
             return $"\"{value.Replace("\"", "\\\"")}\"";
         return value;
     }

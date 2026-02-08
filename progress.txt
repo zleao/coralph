@@ -814,3 +814,16 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Azure Boards descriptions are HTML-formatted and need stripping for plain text display
   - Transformation layer enables Azure Boards work items to work seamlessly with existing loop logic
   - System.CommandLine help rendering may not show all options but functionality works correctly
+
+## 2026-02-08 - #67
+
+- Implemented three critical C# 14 and .NET 10 modernizations: GeneratedRegex, SearchValues, and field keyword
+- Migrated 7 regex patterns in TaskBacklog.cs from Regex instances to [GeneratedRegex] attributes for AOT compatibility and performance
+- Added SearchValues<char> optimization to DockerSandbox.cs Quote method for faster character lookups
+- Replaced explicit backing fields in ConsoleOutput.cs with C# 14 field keyword for cleaner property implementations
+- Files changed: src/Coralph/TaskBacklog.cs, src/Coralph/DockerSandbox.cs, src/Coralph/ConsoleOutput.cs
+- **Learnings:**
+  - [GeneratedRegex] requires making the class partial and methods return Regex via partial method declarations
+  - SearchValues.Create provides optimized character searching in .NET 10, faster than IndexOfAny with inline arrays
+  - The field keyword eliminates boilerplate backing fields while maintaining the same lazy initialization pattern
+  - All 114 tests pass - these modernizations are backward-compatible with existing behavior

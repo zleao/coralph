@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "generatedAtUtc": "2026-02-08T18:57:08.956175Z",
+  "sourceIssueCount": 1,
+  "tasks": [
+    {
+      "id": "67-001",
+      "stableKey": "67:proposed-solution",
+      "issueNumber": 67,
+      "issueTitle": "feat: Implement critical .NET \u0026 C# improvements (testing, modernization, performance)",
+      "title": "Proposed solution",
+      "description": "High Priority (Do First) Add unit tests for TaskBacklog.cs (critical domain logic currently untested) Migrate to [GeneratedRegex] attributes for regular expressions, improving performance and ensuring AOT compatibility",
+      "status": "done",
+      "origin": "heading",
+      "order": 1
+    },
+    {
+      "id": "67-002",
+      "stableKey": "67:alternatives-considered",
+      "issueNumber": 67,
+      "issueTitle": "feat: Implement critical .NET \u0026 C# improvements (testing, modernization, performance)",
+      "title": "Alternatives considered",
+      "description": "Most improvements are upgrades rather than alternatives; the only alternatives considered are retaining the existing legacy approach, which leads to tech debt and limited test coverage. For async code, the alternative is continuing without ConfigureAwait(false) (not recommended). For storage and event streaming, fallba",
+      "status": "open",
+      "origin": "heading",
+      "order": 2
+    }
+  ]
+}

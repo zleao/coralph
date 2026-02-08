@@ -5,25 +5,31 @@ namespace Coralph;
 
 internal static class ConsoleOutput
 {
-    private static IAnsiConsole? _outConsole;
-    private static IAnsiConsole? _errorConsole;
+    internal static IAnsiConsole Out
+    {
+        get => field ??= CreateConsole(Console.Out, Console.IsOutputRedirected);
+        set => field = value;
+    }
 
-    internal static IAnsiConsole Out => _outConsole ??= CreateConsole(Console.Out, Console.IsOutputRedirected);
-    internal static IAnsiConsole Error => _errorConsole ??= CreateConsole(Console.Error, Console.IsErrorRedirected);
+    internal static IAnsiConsole Error
+    {
+        get => field ??= CreateConsole(Console.Error, Console.IsErrorRedirected);
+        set => field = value;
+    }
 
     internal static TextWriter OutWriter { get; } = new ConsoleOutputWriter(isError: false);
     internal static TextWriter ErrorWriter { get; } = new ConsoleOutputWriter(isError: true);
 
     internal static void Configure(IAnsiConsole? stdout, IAnsiConsole? stderr)
     {
-        _outConsole = stdout;
-        _errorConsole = stderr;
+        Out = stdout ?? CreateConsole(Console.Out, Console.IsOutputRedirected);
+        Error = stderr ?? CreateConsole(Console.Error, Console.IsErrorRedirected);
     }
 
     internal static void Reset()
     {
-        _outConsole = null;
-        _errorConsole = null;
+        Out = null!;
+        Error = null!;
     }
 
     internal static void Write(string text) => Out.Write(text);
