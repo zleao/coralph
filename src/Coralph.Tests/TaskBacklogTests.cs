@@ -618,6 +618,69 @@ public class TaskBacklogTests
     }
 
     [Fact]
+    public void HasOpenTasks_WithOpenTasks_ReturnsTrue()
+    {
+        var json = """
+            {
+              "version": 1,
+              "tasks": [
+                { "id": "1-001", "status": "open" },
+                { "id": "1-002", "status": "done" }
+              ]
+            }
+            """;
+
+        Assert.True(TaskBacklog.HasOpenTasks(json));
+    }
+
+    [Fact]
+    public void HasOpenTasks_AllDone_ReturnsFalse()
+    {
+        var json = """
+            {
+              "version": 1,
+              "tasks": [
+                { "id": "1-001", "status": "done" },
+                { "id": "1-002", "status": "done" }
+              ]
+            }
+            """;
+
+        Assert.False(TaskBacklog.HasOpenTasks(json));
+    }
+
+    [Fact]
+    public void HasOpenTasks_WithInProgressTasks_ReturnsTrue()
+    {
+        var json = """
+            {
+              "version": 1,
+              "tasks": [
+                { "id": "1-001", "status": "done" },
+                { "id": "1-002", "status": "in_progress" }
+              ]
+            }
+            """;
+
+        Assert.True(TaskBacklog.HasOpenTasks(json));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void HasOpenTasks_EmptyOrNull_ReturnsFalse(string? json)
+    {
+        Assert.False(TaskBacklog.HasOpenTasks(json!));
+    }
+
+    [Fact]
+    public void HasOpenTasks_InvalidJson_ReturnsFalse()
+    {
+        Assert.False(TaskBacklog.HasOpenTasks("{ not valid json }"));
+    }
+
+    [Fact]
     public void BuildBacklogJson_WithMalformedExistingBacklog_IgnoresAndCreatesNewBacklog()
     {
         var malformedBacklog = "{ this is not valid json }";

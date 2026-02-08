@@ -844,6 +844,38 @@ internal static partial class TaskBacklog
         public List<GeneratedTaskItem> Tasks { get; set; } = [];
     }
 
+    internal static bool HasOpenTasks(string backlogJson)
+    {
+        if (string.IsNullOrWhiteSpace(backlogJson))
+            return false;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(backlogJson);
+            if (!doc.RootElement.TryGetProperty("tasks", out var tasks) ||
+                tasks.ValueKind != JsonValueKind.Array)
+                return false;
+
+            foreach (var task in tasks.EnumerateArray())
+            {
+                if (!task.TryGetProperty("status", out var statusProp) ||
+                    statusProp.ValueKind != JsonValueKind.String)
+                    continue;
+
+                var status = statusProp.GetString();
+                if (string.Equals(status, "open", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(status, "in_progress", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
     private sealed class GeneratedTaskItem
     {
         public string Id { get; set; } = string.Empty;

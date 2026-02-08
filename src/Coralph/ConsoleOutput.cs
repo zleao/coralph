@@ -44,6 +44,18 @@ internal static class ConsoleOutput
 
     internal static void WriteErrorLine(string text) => Error.WriteLine(text);
 
+    internal static void WriteWarningLine(string text)
+    {
+        if (Console.IsErrorRedirected)
+        {
+            Error.WriteLine(text);
+        }
+        else
+        {
+            Error.MarkupLine($"[yellow]{Markup.Escape(text)}[/]");
+        }
+    }
+
     internal static void MarkupLine(string markup) => Out.MarkupLine(markup);
 
     internal static void MarkupLineInterpolated(FormattableString markup) => Out.MarkupLineInterpolated(markup);

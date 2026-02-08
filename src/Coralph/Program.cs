@@ -319,6 +319,24 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
 
                 if (hasTerminalSignal)
                 {
+                    if (string.Equals(terminalSignal, "COMPLETE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            var backlogContent = await File.ReadAllTextAsync(opt.GeneratedTasksFile, ct);
+                            if (TaskBacklog.HasOpenTasks(backlogContent))
+                            {
+                                Log.Warning("COMPLETE signal ignored — open tasks remain in {BacklogFile}", opt.GeneratedTasksFile);
+                                ConsoleOutput.WriteWarningLine("COMPLETE signal ignored — open tasks remain in generated_tasks.json");
+                                continue;
+                            }
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            // No backlog file means no open tasks — allow COMPLETE
+                        }
+                    }
+
                     Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
                     ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
                     await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
