@@ -65,7 +65,7 @@
       "issueTitle": "feat: Implement critical .NET \u0026 C# improvements (testing, modernization, performance)",
       "title": "Introduce an IFileSystem abstraction for improved testability",
       "description": "Introduce an IFileSystem abstraction for improved testability",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 6
     },

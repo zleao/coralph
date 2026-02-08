@@ -862,3 +862,18 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Comma-separated entries in ToolAllow/ToolDeny arrays are normalized into individual rules
   - Empty/null kind falls back to "unknown" when no RequestPermission property found
   - Security-critical code requires exhaustive test coverage to ensure proper behavior
+
+## 2026-02-08 - #67
+
+- Introduced IFileSystem abstraction to improve testability of file operations
+- Created IFileSystem interface with Exists, ReadAllTextAsync, WriteAllTextAsync, GetLastWriteTimeUtc, GetFileLength methods
+- Implemented FileSystem class as default implementation delegating to System.IO.File
+- Updated FileContentCache to use IFileSystem with constructor injection (defaults to FileSystem)
+- Added 2 tests demonstrating mockable file system for testing (now 162 total tests)
+- Files changed: src/Coralph/IFileSystem.cs (new), src/Coralph/FileSystem.cs (new), src/Coralph/FileContentCache.cs, src/Coralph.Tests/FileSystemTests.cs (new), generated_tasks.json
+- **Learnings:**
+  - IFileSystem abstraction enables unit testing without touching the real file system
+  - Constructor injection with default parameter (fileSystem ?? new FileSystem()) maintains backward compatibility
+  - FileContentCache.Shared singleton still uses default FileSystem, but tests can inject mocks
+  - Interface includes file metadata methods (GetLastWriteTimeUtc, GetFileLength) to fully abstract file system operations
+  - This is a tracer bullet - further adoption across other classes (Program.cs, TaskBacklog.cs, etc.) can follow incrementally
