@@ -38,7 +38,7 @@ internal sealed class FileContentCache(IFileSystem? fileSystem = null)
         string content;
         try
         {
-            content = await _fileSystem.ReadAllTextAsync(fullPath, ct);
+            content = await _fileSystem.ReadAllTextAsync(fullPath, ct).ConfigureAwait(false);
         }
         catch (FileNotFoundException)
         {

@@ -88,7 +88,7 @@ internal static partial class TaskBacklog
             return existingJson!;
         }
 
-        await File.WriteAllTextAsync(backlogFile, nextJson, ct);
+        await File.WriteAllTextAsync(backlogFile, nextJson, ct).ConfigureAwait(false);
         FileContentCache.Shared.Invalidate(backlogFile);
         return nextJson;
     }

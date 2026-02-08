@@ -877,3 +877,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - FileContentCache.Shared singleton still uses default FileSystem, but tests can inject mocks
   - Interface includes file metadata methods (GetLastWriteTimeUtc, GetFileLength) to fully abstract file system operations
   - This is a tracer bullet - further adoption across other classes (Program.cs, TaskBacklog.cs, etc.) can follow incrementally
+
+## 2026-02-08 - #67
+
+- Added ConfigureAwait(false) to async code paths for correctness and optimization
+- Updated 7 files with ConfigureAwait(false) on await statements in library-style code
+- Files changed: src/Coralph/FileContentCache.cs, src/Coralph/TaskBacklog.cs, src/Coralph/GhIssues.cs, src/Coralph/AzBoards.cs, src/Coralph/CustomTools.cs (4 locations), generated_tasks.json
+- **Learnings:**
+  - ConfigureAwait(false) prevents deadlocks and improves performance in library/non-UI code
+  - Applied to: file I/O, process management, and cache operations
+  - Avoided applying to await using statements (they return ConfiguredAsyncDisposable, not the resource)
+  - This is focused on library-style code - Program.cs main loop can remain without ConfigureAwait as it's the entry point
+  - All 162 tests pass - changes are backward-compatible

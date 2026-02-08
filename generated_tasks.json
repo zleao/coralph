@@ -76,7 +76,7 @@
       "issueTitle": "feat: Implement critical .NET \u0026 C# improvements (testing, modernization, performance)",
       "title": "Add ConfigureAwait(false) to async code paths for correctness and optimization",
       "description": "Add ConfigureAwait(false) to async code paths for correctness and optimization",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 7
     },
