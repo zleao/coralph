@@ -850,3 +850,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Deduplication uses case-insensitive slugification (Slugify method) for stable keys
   - Status normalization maps "completed"/"complete" -> "done", "in-progress"/"inprogress" -> "in_progress"
   - When all extraction methods fail, fallback to single task with issue title and truncated body
+
+## 2026-02-08 - #67
+
+- Added 20 comprehensive unit tests for PermissionPolicy.cs security-critical code (now 160 total tests)
+- Tests cover: allow/deny list logic, wildcard matching (* and prefix*), case-insensitive matching, comma-separated lists, precedence rules (deny over allow), null/empty kind handling, whitespace normalization, edge cases
+- Files changed: src/Coralph.Tests/PermissionPolicyTests.cs (new), generated_tasks.json
+- **Learnings:**
+  - PermissionPolicy evaluates deny list first, then allow list - deny always takes precedence
+  - Wildcard rules: "*" matches all, "prefix*" matches anything starting with prefix (case-insensitive)
+  - Comma-separated entries in ToolAllow/ToolDeny arrays are normalized into individual rules
+  - Empty/null kind falls back to "unknown" when no RequestPermission property found
+  - Security-critical code requires exhaustive test coverage to ensure proper behavior
