@@ -134,34 +134,6 @@ internal static class PromptHelpers
                string.Equals(signal, "COMPLETE", StringComparison.OrdinalIgnoreCase);
     }
 
-    internal static void ApplyOverrides(LoopOptions target, LoopOptionsOverrides overrides)
-    {
-        if (overrides.MaxIterations is { } max) target.MaxIterations = max;
-        if (!string.IsNullOrWhiteSpace(overrides.Model)) target.Model = overrides.Model;
-        if (!string.IsNullOrWhiteSpace(overrides.PromptFile)) target.PromptFile = overrides.PromptFile;
-        if (!string.IsNullOrWhiteSpace(overrides.ProgressFile)) target.ProgressFile = overrides.ProgressFile;
-        if (!string.IsNullOrWhiteSpace(overrides.IssuesFile)) target.IssuesFile = overrides.IssuesFile;
-        if (!string.IsNullOrWhiteSpace(overrides.GeneratedTasksFile)) target.GeneratedTasksFile = overrides.GeneratedTasksFile;
-        if (overrides.RefreshIssues is { } refresh) target.RefreshIssues = refresh;
-        if (!string.IsNullOrWhiteSpace(overrides.Repo)) target.Repo = overrides.Repo;
-        if (overrides.RefreshIssuesAzdo is { } refreshAzdo) target.RefreshIssuesAzdo = refreshAzdo;
-        if (!string.IsNullOrWhiteSpace(overrides.AzdoOrganization)) target.AzdoOrganization = overrides.AzdoOrganization;
-        if (!string.IsNullOrWhiteSpace(overrides.AzdoProject)) target.AzdoProject = overrides.AzdoProject;
-        if (!string.IsNullOrWhiteSpace(overrides.CliPath)) target.CliPath = overrides.CliPath;
-        if (!string.IsNullOrWhiteSpace(overrides.CliUrl)) target.CliUrl = overrides.CliUrl;
-        if (!string.IsNullOrWhiteSpace(overrides.CopilotConfigPath)) target.CopilotConfigPath = overrides.CopilotConfigPath;
-        if (!string.IsNullOrWhiteSpace(overrides.CopilotToken)) target.CopilotToken = overrides.CopilotToken;
-        if (overrides.ToolAllow is not null) target.ToolAllow = overrides.ToolAllow;
-        if (overrides.ToolDeny is not null) target.ToolDeny = overrides.ToolDeny;
-        if (overrides.ShowReasoning is { } showReasoning) target.ShowReasoning = showReasoning;
-        if (overrides.ColorizedOutput is { } colorizedOutput) target.ColorizedOutput = colorizedOutput;
-        if (overrides.StreamEvents is { } streamEvents) target.StreamEvents = streamEvents;
-        if (overrides.DockerSandbox is { } dockerSandbox) target.DockerSandbox = dockerSandbox;
-        if (!string.IsNullOrWhiteSpace(overrides.DockerImage)) target.DockerImage = overrides.DockerImage;
-        if (overrides.ListModels is { } listModels) target.ListModels = listModels;
-        if (overrides.ListModelsJson is { } listModelsJson) target.ListModelsJson = listModelsJson;
-    }
-
     private static string TrimMarkdownWrapper(string value)
     {
         return value.Trim('`', '*', '_');

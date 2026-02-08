@@ -901,3 +901,20 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Primary constructors reduce boilerplate by eliminating explicit constructor declarations
   - Validation (null checks, exceptions) can be done inline in field initializers for cleaner code
   - All 162 tests pass - primary constructors are fully backward compatible
+
+## 2026-02-08 - #67
+
+- Extracted ConfigurationService to improve Single Responsibility Principle (SRP) compliance
+- Created new ConfigurationService class consolidating all configuration-related logic
+- Moved LoadOptions, ResolveConfigPath, and ApplyOverrides from Program.cs/PromptHelpers to ConfigurationService
+- Updated Program.cs to use ConfigurationService.LoadOptions and ConfigurationService.ResolveConfigPath
+- Removed ApplyOverrides from PromptHelpers.cs (now PromptHelpers focuses solely on prompt building)
+- Created ConfigurationServiceTests.cs with 11 tests for configuration loading and override logic
+- Removed ApplyOverrides tests from PromptHelpersTests.cs (moved to ConfigurationServiceTests)
+- Files changed: src/Coralph/ConfigurationService.cs (new), src/Coralph/Program.cs, src/Coralph/PromptHelpers.cs, src/Coralph.Tests/ConfigurationServiceTests.cs (new), src/Coralph.Tests/PromptHelpersTests.cs, generated_tasks.json
+- **Learnings:**
+  - Extracting configuration logic into a dedicated service improves separation of concerns
+  - PromptHelpers now has a single responsibility: building combined prompts from template and context
+  - ConfigurationService has clear responsibilities: resolving paths, loading config, applying overrides
+  - This refactoring makes the code more maintainable and testable
+  - All 162 tests pass - the refactoring is fully backward compatible

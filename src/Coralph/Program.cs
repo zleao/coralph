@@ -28,7 +28,7 @@ if (overrides is null)
 
 if (initialConfig)
 {
-    var path = ResolveConfigPath(configFile);
+    var path = ConfigurationService.ResolveConfigPath(configFile);
     if (File.Exists(path))
     {
         ConsoleOutput.WriteErrorLine($"Refusing to overwrite existing config file: {path}");
@@ -45,7 +45,7 @@ if (initialConfig)
     return 0;
 }
 
-var opt = LoadOptions(overrides, configFile);
+var opt = ConfigurationService.LoadOptions(overrides, configFile);
 
 EventStreamWriter? eventStream = null;
 if (opt.StreamEvents)
@@ -449,41 +449,6 @@ static async Task<bool> TryEmitCopilotDiagnosticsAsync(Exception ex, LoopOptions
     return true;
 }
 
-static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFile)
-{
-    var path = ResolveConfigPath(configFile);
-    var options = new LoopOptions();
-
-    if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
-    {
-        var config = new ConfigurationBuilder()
-            .AddJsonFile(path, optional: true, reloadOnChange: false)
-            .Build();
-
-        config.GetSection(LoopOptions.ConfigurationSectionName).Bind(options);
-    }
-
-    PromptHelpers.ApplyOverrides(options, overrides);
-    return options;
-}
-
-static string ResolveConfigPath(string? configFile)
-{
-    var path = configFile ?? LoopOptions.ConfigurationFileName;
-    if (Path.IsPathRooted(path))
-        return path;
-
-    if (configFile is null)
-    {
-        var cwdPath = Path.Combine(Directory.GetCurrentDirectory(), path);
-        if (File.Exists(cwdPath))
-            return cwdPath;
-
-        return Path.Combine(AppContext.BaseDirectory, path);
-    }
-
-    return Path.Combine(Directory.GetCurrentDirectory(), path);
-}
 
 static string ExpandHomePath(string path)
 {
