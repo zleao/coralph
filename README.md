@@ -52,7 +52,7 @@ cd your-repo
 ./coralph --max-iterations 10
 ```
 
-The init command creates `issues.json`, `progress.txt`, `coralph.config.json`, and a `prompt.md` template for your tech stack (Python, JavaScript, Go, Rust, or .NET).
+The init command creates `issues.json`, `progress.txt`, `coralph.config.json`, and a `prompt.md` template for your tech stack (Python, JavaScript, Go, Rust, or .NET) using only the Coralph binary.
 
 ### Common Commands
 
