@@ -1,9 +1,10 @@
 namespace Coralph;
 
-internal sealed class FileContentCache
+internal sealed class FileContentCache(IFileSystem? fileSystem = null)
 {
     private readonly Dictionary<string, CacheEntry> _entries = new(StringComparer.Ordinal);
     private readonly object _lock = new();
+    private readonly IFileSystem _fileSystem = fileSystem ?? new FileSystem();
 
     internal static FileContentCache Shared { get; } = new();
 
@@ -15,14 +16,14 @@ internal sealed class FileContentCache
         }
 
         var fullPath = Path.GetFullPath(path);
-        if (!File.Exists(fullPath))
+        if (!_fileSystem.Exists(fullPath))
         {
             Invalidate(fullPath);
             return FileReadResult.Missing;
         }
 
-        var lastWriteUtc = File.GetLastWriteTimeUtc(fullPath);
-        var length = new FileInfo(fullPath).Length;
+        var lastWriteUtc = _fileSystem.GetLastWriteTimeUtc(fullPath);
+        var length = _fileSystem.GetFileLength(fullPath);
 
         lock (_lock)
         {
@@ -37,7 +38,7 @@ internal sealed class FileContentCache
         string content;
         try
         {
-            content = await File.ReadAllTextAsync(fullPath, ct);
+            content = await _fileSystem.ReadAllTextAsync(fullPath, ct).ConfigureAwait(false);
         }
         catch (FileNotFoundException)
         {
@@ -50,11 +51,11 @@ internal sealed class FileContentCache
             return FileReadResult.Missing;
         }
 
-        if (File.Exists(fullPath))
+        if (_fileSystem.Exists(fullPath))
         {
             var updatedEntry = new CacheEntry(
-                Length: new FileInfo(fullPath).Length,
-                LastWriteUtc: File.GetLastWriteTimeUtc(fullPath),
+                Length: _fileSystem.GetFileLength(fullPath),
+                LastWriteUtc: _fileSystem.GetLastWriteTimeUtc(fullPath),
                 Content: content);
 
             lock (_lock)

@@ -1,37 +1,38 @@
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Coralph;
 
-internal static class TaskBacklog
+internal static partial class TaskBacklog
 {
     internal const string DefaultBacklogFile = "generated_tasks.json";
 
     private const int MaxTasksPerIssue = 25;
     private const int LargeIssueBodyThreshold = 3000;
     private const int MinimumLargeIssueTaskCount = 8;
-    private static readonly Regex ChecklistLineRegex = new(
-        @"^\s*[-*+]\s*\[(?<done>[ xX])\]\s+(?<text>.+)$",
-        RegexOptions.Compiled);
-    private static readonly Regex HeadingLineRegex = new(
-        @"^\s{0,3}#{2,4}\s+(?<title>.+?)\s*$",
-        RegexOptions.Compiled);
-    private static readonly Regex ListLineRegex = new(
-        @"^\s*(?:[-*+]|(?:\d+\.))\s+(?<text>.+)$",
-        RegexOptions.Compiled);
-    private static readonly Regex MarkdownLinkRegex = new(
-        @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
-        RegexOptions.Compiled);
-    private static readonly Regex MarkdownFormattingRegex = new(
-        @"[`*_~]",
-        RegexOptions.Compiled);
-    private static readonly Regex WhitespaceRegex = new(
-        @"\s+",
-        RegexOptions.Compiled);
-    private static readonly Regex ListPrefixRegex = new(
-        @"^\s*(?:[-*+]|(?:\d+\.))\s+",
-        RegexOptions.Compiled);
+
+    [GeneratedRegex(@"^\s*[-*+]\s*\[(?<done>[ xX])\]\s+(?<text>.+)$")]
+    private static partial Regex ChecklistLineRegex();
+
+    [GeneratedRegex(@"^\s{0,3}#{2,4}\s+(?<title>.+?)\s*$")]
+    private static partial Regex HeadingLineRegex();
+
+    [GeneratedRegex(@"^\s*(?:[-*+]|(?:\d+\.))\s+(?<text>.+)$")]
+    private static partial Regex ListLineRegex();
+
+    [GeneratedRegex(@"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)")]
+    private static partial Regex MarkdownLinkRegex();
+
+    [GeneratedRegex(@"[`*_~]")]
+    private static partial Regex MarkdownFormattingRegex();
+
+    [GeneratedRegex(@"\s+")]
+    private static partial Regex WhitespaceRegex();
+
+    [GeneratedRegex(@"^\s*(?:[-*+]|(?:\d+\.))\s+")]
+    private static partial Regex ListPrefixRegex();
 
     private static readonly JsonSerializerOptions SerializeOptions = new()
     {
@@ -87,7 +88,7 @@ internal static class TaskBacklog
             return existingJson!;
         }
 
-        await File.WriteAllTextAsync(backlogFile, nextJson, ct);
+        await File.WriteAllTextAsync(backlogFile, nextJson, ct).ConfigureAwait(false);
         FileContentCache.Shared.Invalidate(backlogFile);
         return nextJson;
     }
@@ -205,9 +206,37 @@ internal static class TaskBacklog
             var body = issue.TryGetProperty("body", out var bodyProp) && bodyProp.ValueKind == JsonValueKind.String
                 ? bodyProp.GetString()
                 : string.Empty;
+            var comments = new List<string>();
+            if (issue.TryGetProperty("comments", out var commentsProp) && commentsProp.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var comment in commentsProp.EnumerateArray())
+                {
+                    if (comment.ValueKind == JsonValueKind.Object &&
+                        comment.TryGetProperty("body", out var commentBodyProp) &&
+                        commentBodyProp.ValueKind == JsonValueKind.String)
+                    {
+                        var commentBody = commentBodyProp.GetString();
+                        if (!string.IsNullOrWhiteSpace(commentBody))
+                        {
+                            comments.Add(commentBody);
+                        }
+
+                        continue;
+                    }
+
+                    if (comment.ValueKind == JsonValueKind.String)
+                    {
+                        var commentBody = comment.GetString();
+                        if (!string.IsNullOrWhiteSpace(commentBody))
+                        {
+                            comments.Add(commentBody);
+                        }
+                    }
+                }
+            }
 
             var cleanTitle = string.IsNullOrWhiteSpace(title) ? $"Issue {number}" : title.Trim();
-            issues.Add(new IssueItem(number, cleanTitle, body ?? string.Empty));
+            issues.Add(new IssueItem(number, cleanTitle, body ?? string.Empty, comments));
             syntheticNumber++;
         }
 
@@ -266,9 +295,13 @@ internal static class TaskBacklog
 
     private static List<TaskDraft> BuildTaskDrafts(IssueItem issue)
     {
-        var checklist = DedupeAndLimit(ExtractChecklistTasks(issue.Body));
+        var commentChecklist = DedupeAndLimit(ExtractCommentChecklistTasks(issue.Comments));
+        var commentListItems = DedupeAndLimit(ExtractCommentListTasks(issue.Comments));
+        var hasCommentTasks = commentChecklist.Count > 0 || commentListItems.Count > 0;
+
+        var checklist = DedupeAndLimit(ExtractChecklistTasks(issue.Body).Concat(commentChecklist));
         var headings = DedupeAndLimit(ExtractHeadingTasks(issue.Body));
-        var listItems = DedupeAndLimit(ExtractListTasks(issue.Body));
+        var listItems = DedupeAndLimit(ExtractListTasks(issue.Body).Concat(commentListItems));
         var chunks = DedupeAndLimit(ExtractParagraphTasks(issue));
 
         if (checklist.Count > 0 && ShouldExpandChecklistDrivenIssue(issue, checklist.Count))
@@ -279,6 +312,16 @@ internal static class TaskBacklog
         if (checklist.Count > 0)
         {
             return checklist;
+        }
+
+        if (listItems.Count > 0 && (hasCommentTasks || headings.Count > 0 || issue.Body.Length >= 1500))
+        {
+            if (listItems.Count < MinimumLargeIssueTaskCount && (headings.Count > 0 || chunks.Count > 0))
+            {
+                return MergeDraftSources(listItems, headings, chunks, [], MinimumLargeIssueTaskCount);
+            }
+
+            return listItems;
         }
 
         if (headings.Count >= 2 || (issue.Body.Length >= 1500 && headings.Count > 0))
@@ -306,11 +349,11 @@ internal static class TaskBacklog
         ];
     }
 
-    private static IEnumerable<TaskDraft> ExtractChecklistTasks(string body)
+    private static IEnumerable<TaskDraft> ExtractChecklistTasks(string body, string origin = "checklist")
     {
         foreach (var line in SplitLines(body))
         {
-            var match = ChecklistLineRegex.Match(line);
+            var match = ChecklistLineRegex().Match(line);
             if (!match.Success)
             {
                 continue;
@@ -326,8 +369,24 @@ internal static class TaskBacklog
             yield return new TaskDraft(
                 Title: title,
                 Description: title,
-                Origin: "checklist",
+                Origin: origin,
                 Status: doneFlag.Trim().Length == 0 ? "open" : "done");
+        }
+    }
+
+    private static IEnumerable<TaskDraft> ExtractCommentChecklistTasks(IEnumerable<string> comments)
+    {
+        foreach (var comment in comments)
+        {
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                continue;
+            }
+
+            foreach (var draft in ExtractChecklistTasks(comment, "comment"))
+            {
+                yield return draft;
+            }
         }
     }
 
@@ -342,7 +401,7 @@ internal static class TaskBacklog
         var headings = new List<(string Title, int Index)>();
         for (var i = 0; i < lines.Length; i++)
         {
-            var match = HeadingLineRegex.Match(lines[i]);
+            var match = HeadingLineRegex().Match(lines[i]);
             if (!match.Success)
             {
                 continue;
@@ -372,16 +431,16 @@ internal static class TaskBacklog
         }
     }
 
-    private static IEnumerable<TaskDraft> ExtractListTasks(string body)
+    private static IEnumerable<TaskDraft> ExtractListTasks(string body, string origin = "list")
     {
         foreach (var line in SplitLines(body))
         {
-            if (ChecklistLineRegex.IsMatch(line))
+            if (ChecklistLineRegex().IsMatch(line))
             {
                 continue;
             }
 
-            var match = ListLineRegex.Match(line);
+            var match = ListLineRegex().Match(line);
             if (!match.Success)
             {
                 continue;
@@ -401,8 +460,24 @@ internal static class TaskBacklog
             yield return new TaskDraft(
                 Title: text,
                 Description: text,
-                Origin: "list",
+                Origin: origin,
                 Status: "open");
+        }
+    }
+
+    private static IEnumerable<TaskDraft> ExtractCommentListTasks(IEnumerable<string> comments)
+    {
+        foreach (var comment in comments)
+        {
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                continue;
+            }
+
+            foreach (var draft in ExtractListTasks(comment, "comment"))
+            {
+                yield return draft;
+            }
         }
     }
 
@@ -572,7 +647,7 @@ internal static class TaskBacklog
         }
 
         var lines = SplitLines(sectionText)
-            .Select(line => ListPrefixRegex.Replace(line, string.Empty))
+            .Select(line => ListPrefixRegex().Replace(line, string.Empty))
             .Select(CleanTaskText)
             .Where(line => !string.IsNullOrWhiteSpace(line))
             .Take(3);
@@ -632,9 +707,9 @@ internal static class TaskBacklog
             return string.Empty;
         }
 
-        var clean = MarkdownLinkRegex.Replace(value, "${text}");
-        clean = MarkdownFormattingRegex.Replace(clean, string.Empty);
-        clean = WhitespaceRegex.Replace(clean, " ").Trim();
+        var clean = MarkdownLinkRegex().Replace(value, "${text}");
+        clean = MarkdownFormattingRegex().Replace(clean, string.Empty);
+        clean = WhitespaceRegex().Replace(clean, " ").Trim();
         clean = clean.Trim('-', ':', ';', '.', ',', ' ');
         return clean;
     }
@@ -689,7 +764,7 @@ internal static class TaskBacklog
             }
         }
 
-        return WhitespaceRegex.Replace(sb.ToString(), " ").Trim();
+        return WhitespaceRegex().Replace(sb.ToString(), " ").Trim();
     }
 
     private static string NormalizeStatus(string? status)
@@ -758,7 +833,7 @@ internal static class TaskBacklog
         return true;
     }
 
-    private sealed record IssueItem(int Number, string Title, string Body);
+    private sealed record IssueItem(int Number, string Title, string Body, IReadOnlyList<string> Comments);
     private sealed record TaskDraft(string Title, string Description, string Origin, string Status);
 
     private sealed class GeneratedTaskBacklog
@@ -767,6 +842,38 @@ internal static class TaskBacklog
         public DateTime GeneratedAtUtc { get; set; }
         public int SourceIssueCount { get; set; }
         public List<GeneratedTaskItem> Tasks { get; set; } = [];
+    }
+
+    internal static bool HasOpenTasks(string backlogJson)
+    {
+        if (string.IsNullOrWhiteSpace(backlogJson))
+            return false;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(backlogJson);
+            if (!doc.RootElement.TryGetProperty("tasks", out var tasks) ||
+                tasks.ValueKind != JsonValueKind.Array)
+                return false;
+
+            foreach (var task in tasks.EnumerateArray())
+            {
+                if (!task.TryGetProperty("status", out var statusProp) ||
+                    statusProp.ValueKind != JsonValueKind.String)
+                    continue;
+
+                var status = statusProp.GetString();
+                if (string.Equals(status, "open", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(status, "in_progress", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 
     private sealed class GeneratedTaskItem

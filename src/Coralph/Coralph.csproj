@@ -15,7 +15,33 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitHub.Copilot.SDK" Version="0.1.22" />
+    <Content Include="..\..\issues.sample.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\prompt.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>prompt.md</TargetPath>
+    </Content>
+    <Content Include="..\..\examples\javascript-prompt.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>examples/javascript-prompt.md</TargetPath>
+    </Content>
+    <Content Include="..\..\examples\python-prompt.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>examples/python-prompt.md</TargetPath>
+    </Content>
+    <Content Include="..\..\examples\go-prompt.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>examples/go-prompt.md</TargetPath>
+    </Content>
+    <Content Include="..\..\examples\rust-prompt.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>examples/rust-prompt.md</TargetPath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GitHub.Copilot.SDK" Version="0.1.23" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
     <PackageReference Include="Serilog" Version="4.2.0" />

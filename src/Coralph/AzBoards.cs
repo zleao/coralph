@@ -35,9 +35,9 @@ internal static class AzBoards
         var stdoutTask = p.StandardOutput.ReadToEndAsync(ct);
         var stderrTask = p.StandardError.ReadToEndAsync(ct);
 
-        await p.WaitForExitAsync(ct);
-        var stdout = await stdoutTask;
-        var stderr = await stderrTask;
+        await p.WaitForExitAsync(ct).ConfigureAwait(false);
+        var stdout = await stdoutTask.ConfigureAwait(false);
+        var stderr = await stderrTask.ConfigureAwait(false);
 
         if (p.ExitCode != 0)
         {

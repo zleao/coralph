@@ -5,13 +5,13 @@ namespace Coralph;
 
 internal static class ArgParser
 {
-    internal static (LoopOptionsOverrides? Overrides, string? Error, bool PrintInitialConfig, string? ConfigFile, bool ShowHelp, bool ShowVersion) Parse(string[] args)
+    internal static (LoopOptionsOverrides? Overrides, string? Error, bool Init, string? ConfigFile, bool ShowHelp, bool ShowVersion) Parse(string[] args)
     {
         var options = new LoopOptionsOverrides();
         string? configFile = null;
         var showHelp = false;
         var showVersion = false;
-        var printInitialConfig = false;
+        var init = false;
         var errorMessages = new List<string>();
 
         var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
@@ -35,7 +35,7 @@ internal static class ArgParser
         var toolAllowOption = new Option<string[]>("--tool-allow", "Allow tool/permission kinds (repeatable or comma-separated)");
         var toolDenyOption = new Option<string[]>("--tool-deny", "Deny tool/permission kinds (repeatable or comma-separated)");
         var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
-        var initialConfigOption = new Option<bool>("--initial-config", "Writes default config json and exits");
+        var initOption = new Option<bool>("--init", "Initialize the repository (issues.json, config, prompt, progress) and exits");
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
         var streamEventsOption = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
@@ -67,7 +67,7 @@ internal static class ArgParser
         root.AddOption(toolAllowOption);
         root.AddOption(toolDenyOption);
         root.AddOption(configOption);
-        root.AddOption(initialConfigOption);
+        root.AddOption(initOption);
         root.AddOption(showReasoningOption);
         root.AddOption(colorizedOutputOption);
         root.AddOption(streamEventsOption);
@@ -79,7 +79,7 @@ internal static class ArgParser
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
         showVersion = result.GetValueForOption(versionOption);
-        printInitialConfig = result.GetValueForOption(initialConfigOption);
+        init = result.GetValueForOption(initOption);
         configFile = result.GetValueForOption(configOption);
 
         var maxIterations = result.GetValueForOption(maxIterationsOption);
@@ -322,20 +322,20 @@ internal static class ArgParser
 
         if (showHelp)
         {
-            return (null, null, printInitialConfig, configFile, true, false);
+            return (null, null, init, configFile, true, false);
         }
 
         if (showVersion)
         {
-            return (null, null, printInitialConfig, configFile, false, true);
+            return (null, null, init, configFile, false, true);
         }
 
         if (errorMessages.Count > 0)
         {
-            return (null, string.Join(Environment.NewLine, errorMessages), printInitialConfig, configFile, false, false);
+            return (null, string.Join(Environment.NewLine, errorMessages), init, configFile, false, false);
         }
 
-        return (options, null, printInitialConfig, configFile, false, false);
+        return (options, null, init, configFile, false, false);
     }
 
     internal static void PrintUsage(TextWriter w)
@@ -381,7 +381,7 @@ internal static class ArgParser
         root.AddOption(toolAllowOption);
         root.AddOption(toolDenyOption);
         root.AddOption(new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)"));
-        root.AddOption(new Option<bool>("--initial-config", "Writes default config json and exits"));
+        root.AddOption(new Option<bool>("--init", "Initialize the repository (issues.json, config, prompt, progress) and exits"));
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
         root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
         root.AddOption(new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout"));

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Context;
 
-var (overrides, err, initialConfig, configFile, showHelp, showVersion) = ArgParser.Parse(args);
+var (overrides, err, init, configFile, showHelp, showVersion) = ArgParser.Parse(args);
 
 if (showVersion)
 {
@@ -26,26 +26,13 @@ if (overrides is null)
     return showHelp && err is null ? 0 : 2;
 }
 
-if (initialConfig)
+if (init)
 {
-    var path = ResolveConfigPath(configFile);
-    if (File.Exists(path))
-    {
-        ConsoleOutput.WriteErrorLine($"Refusing to overwrite existing config file: {path}");
-        return 1;
-    }
-
-    var defaultPayload = new Dictionary<string, LoopOptions>
-    {
-        [LoopOptions.ConfigurationSectionName] = new LoopOptions()
-    };
-    var json = JsonSerializer.Serialize(defaultPayload, new JsonSerializerOptions { WriteIndented = true });
-    await File.WriteAllTextAsync(path, json, CancellationToken.None);
-    ConsoleOutput.WriteLine($"Wrote default configuration to {path}");
-    return 0;
+    var initExit = await InitWorkflow.RunAsync(configFile);
+    return initExit;
 }
 
-var opt = LoadOptions(overrides, configFile);
+var opt = ConfigurationService.LoadOptions(overrides, configFile);
 
 EventStreamWriter? eventStream = null;
 if (opt.StreamEvents)
@@ -319,6 +306,24 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
 
                 if (hasTerminalSignal)
                 {
+                    if (string.Equals(terminalSignal, "COMPLETE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            var backlogContent = await File.ReadAllTextAsync(opt.GeneratedTasksFile, ct);
+                            if (TaskBacklog.HasOpenTasks(backlogContent))
+                            {
+                                Log.Warning("COMPLETE signal ignored — open tasks remain in {BacklogFile}", opt.GeneratedTasksFile);
+                                ConsoleOutput.WriteWarningLine("COMPLETE signal ignored — open tasks remain in generated_tasks.json");
+                                continue;
+                            }
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            // No backlog file means no open tasks — allow COMPLETE
+                        }
+                    }
+
                     Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
                     ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
                     await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
@@ -431,41 +436,6 @@ static async Task<bool> TryEmitCopilotDiagnosticsAsync(Exception ex, LoopOptions
     return true;
 }
 
-static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFile)
-{
-    var path = ResolveConfigPath(configFile);
-    var options = new LoopOptions();
-
-    if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
-    {
-        var config = new ConfigurationBuilder()
-            .AddJsonFile(path, optional: true, reloadOnChange: false)
-            .Build();
-
-        config.GetSection(LoopOptions.ConfigurationSectionName).Bind(options);
-    }
-
-    PromptHelpers.ApplyOverrides(options, overrides);
-    return options;
-}
-
-static string ResolveConfigPath(string? configFile)
-{
-    var path = configFile ?? LoopOptions.ConfigurationFileName;
-    if (Path.IsPathRooted(path))
-        return path;
-
-    if (configFile is null)
-    {
-        var cwdPath = Path.Combine(Directory.GetCurrentDirectory(), path);
-        if (File.Exists(cwdPath))
-            return cwdPath;
-
-        return Path.Combine(AppContext.BaseDirectory, path);
-    }
-
-    return Path.Combine(Directory.GetCurrentDirectory(), path);
-}
 
 static string ExpandHomePath(string path)
 {

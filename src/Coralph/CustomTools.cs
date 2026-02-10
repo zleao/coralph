@@ -39,7 +39,7 @@ internal static class CustomTools
 
     internal static async Task<object> ListOpenIssuesAsync(string issuesFile, bool includeClosed)
     {
-        var issuesRead = await FileContentCache.Shared.TryReadTextAsync(issuesFile);
+        var issuesRead = await FileContentCache.Shared.TryReadTextAsync(issuesFile).ConfigureAwait(false);
         if (!issuesRead.Exists)
         {
             return new { error = "issues.json not found", issues = Array.Empty<object>() };
@@ -81,7 +81,7 @@ internal static class CustomTools
 
     internal static async Task<object> ListGeneratedTasksAsync(string generatedTasksFile, bool includeCompleted)
     {
-        var tasksRead = await FileContentCache.Shared.TryReadTextAsync(generatedTasksFile);
+        var tasksRead = await FileContentCache.Shared.TryReadTextAsync(generatedTasksFile).ConfigureAwait(false);
         if (!tasksRead.Exists)
         {
             return new { error = "generated_tasks.json not found", tasks = Array.Empty<object>() };
@@ -150,7 +150,7 @@ internal static class CustomTools
 
     internal static async Task<object> GetProgressSummaryAsync(string progressFile, int count)
     {
-        var progressRead = await FileContentCache.Shared.TryReadTextAsync(progressFile);
+        var progressRead = await FileContentCache.Shared.TryReadTextAsync(progressFile).ConfigureAwait(false);
         if (!progressRead.Exists)
         {
             return new { error = "progress.txt not found", entries = Array.Empty<string>() };
@@ -171,7 +171,7 @@ internal static class CustomTools
 
     internal static async Task<object> SearchProgressAsync(string progressFile, string searchTerm)
     {
-        var progressRead = await FileContentCache.Shared.TryReadTextAsync(progressFile);
+        var progressRead = await FileContentCache.Shared.TryReadTextAsync(progressFile).ConfigureAwait(false);
         if (!progressRead.Exists)
         {
             return new { error = "progress.txt not found", matches = Array.Empty<string>() };

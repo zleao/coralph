@@ -5,25 +5,31 @@ namespace Coralph;
 
 internal static class ConsoleOutput
 {
-    private static IAnsiConsole? _outConsole;
-    private static IAnsiConsole? _errorConsole;
+    internal static IAnsiConsole Out
+    {
+        get => field ??= CreateConsole(Console.Out, Console.IsOutputRedirected);
+        set => field = value;
+    }
 
-    internal static IAnsiConsole Out => _outConsole ??= CreateConsole(Console.Out, Console.IsOutputRedirected);
-    internal static IAnsiConsole Error => _errorConsole ??= CreateConsole(Console.Error, Console.IsErrorRedirected);
+    internal static IAnsiConsole Error
+    {
+        get => field ??= CreateConsole(Console.Error, Console.IsErrorRedirected);
+        set => field = value;
+    }
 
     internal static TextWriter OutWriter { get; } = new ConsoleOutputWriter(isError: false);
     internal static TextWriter ErrorWriter { get; } = new ConsoleOutputWriter(isError: true);
 
     internal static void Configure(IAnsiConsole? stdout, IAnsiConsole? stderr)
     {
-        _outConsole = stdout;
-        _errorConsole = stderr;
+        Out = stdout ?? CreateConsole(Console.Out, Console.IsOutputRedirected);
+        Error = stderr ?? CreateConsole(Console.Error, Console.IsErrorRedirected);
     }
 
     internal static void Reset()
     {
-        _outConsole = null;
-        _errorConsole = null;
+        Out = null!;
+        Error = null!;
     }
 
     internal static void Write(string text) => Out.Write(text);
@@ -37,6 +43,18 @@ internal static class ConsoleOutput
     internal static void WriteErrorLine() => Error.WriteLine();
 
     internal static void WriteErrorLine(string text) => Error.WriteLine(text);
+
+    internal static void WriteWarningLine(string text)
+    {
+        if (Console.IsErrorRedirected)
+        {
+            Error.WriteLine(text);
+        }
+        else
+        {
+            Error.MarkupLine($"[yellow]{Markup.Escape(text)}[/]");
+        }
+    }
 
     internal static void MarkupLine(string markup) => Out.MarkupLine(markup);
 
@@ -116,14 +134,9 @@ internal static class ConsoleOutput
         return AnsiConsole.Create(settings);
     }
 
-    private sealed class ConsoleOutputWriter : TextWriter
+    private sealed class ConsoleOutputWriter(bool isError) : TextWriter
     {
-        private readonly bool _isError;
-
-        internal ConsoleOutputWriter(bool isError)
-        {
-            _isError = isError;
-        }
+        private readonly bool _isError = isError;
 
         public override Encoding Encoding => Console.OutputEncoding;
 
