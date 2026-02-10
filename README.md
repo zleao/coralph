@@ -43,8 +43,7 @@ dotnet publish src/Coralph -c Release -r linux-x64 --self-contained
 cd your-repo
 
 # 2. Initialize (auto-detects tech stack)
-pwsh /path/to/coralph/coralph-init.ps1   # PowerShell (recommended)
-# OR: /path/to/coralph/coralph-init       # Bash
+./coralph --init
 
 # 3. (Optional) Fetch GitHub issues
 ./coralph --refresh-issues --repo owner/repo-name
@@ -53,14 +52,14 @@ pwsh /path/to/coralph/coralph-init.ps1   # PowerShell (recommended)
 ./coralph --max-iterations 10
 ```
 
-The init script creates `issues.json`, `progress.txt`, `coralph.config.json`, and a `prompt.md` template for your tech stack (Python, JavaScript, Go, Rust, or .NET).
+The init command creates `issues.json`, `progress.txt`, `coralph.config.json`, and a `prompt.md` template for your tech stack (Python, JavaScript, Go, Rust, or .NET).
 
 ### Common Commands
 
 ```bash
 ./coralph --max-iterations 10                    # Run 10 iterations
 ./coralph --refresh-issues --repo owner/name     # Fetch GitHub issues
-./coralph --initial-config                       # Create default config
+./coralph --init                                 # Initialize repository artifacts
 ./coralph --version                              # Show version
 ./coralph --help                                 # Show all options
 ```
@@ -163,5 +162,5 @@ The loop stops when the AI outputs `COMPLETE` or no open issues remain.
 ## Extending Tech Stack Support
 
 1. Create `examples/<stack>-prompt.md` with build/test commands
-2. Update `coralph-init` detection logic for your manifest files
+2. Update `--init` detection logic for your manifest files (see src/Coralph/Program.cs)
 3. Submit a PR – see [CONTRIBUTING.md](CONTRIBUTING.md)

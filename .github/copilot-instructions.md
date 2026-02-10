@@ -26,7 +26,7 @@
 ## Run loops (common commands)
 - Run loop: `dotnet run --project src/Coralph -- --max-iterations 10`
 - Refresh issues (optional): `(dotnet run --project src/Coralph -- --refresh-issues --repo owner/name) || true`
-- Create default config: `dotnet run --project src/Coralph -- --initial-config`
+- Create default config: `dotnet run --project src/Coralph -- --init`
 
 ## Changes and logging
 - After completing work, append progress to `progress.txt` using the format in `prompt.md`.

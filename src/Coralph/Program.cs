@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Context;
 
-var (overrides, err, initialConfig, configFile, showHelp, showVersion) = ArgParser.Parse(args);
+var (overrides, err, init, configFile, showHelp, showVersion) = ArgParser.Parse(args);
 
 if (showVersion)
 {
@@ -26,23 +26,10 @@ if (overrides is null)
     return showHelp && err is null ? 0 : 2;
 }
 
-if (initialConfig)
+if (init)
 {
-    var path = ConfigurationService.ResolveConfigPath(configFile);
-    if (File.Exists(path))
-    {
-        ConsoleOutput.WriteErrorLine($"Refusing to overwrite existing config file: {path}");
-        return 1;
-    }
-
-    var defaultPayload = new Dictionary<string, LoopOptions>
-    {
-        [LoopOptions.ConfigurationSectionName] = new LoopOptions()
-    };
-    var json = JsonSerializer.Serialize(defaultPayload, new JsonSerializerOptions { WriteIndented = true });
-    await File.WriteAllTextAsync(path, json, CancellationToken.None);
-    ConsoleOutput.WriteLine($"Wrote default configuration to {path}");
-    return 0;
+    var initExit = await InitWorkflow.RunAsync(configFile);
+    return initExit;
 }
 
 var opt = ConfigurationService.LoadOptions(overrides, configFile);

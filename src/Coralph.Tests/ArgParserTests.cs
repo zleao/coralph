@@ -7,11 +7,11 @@ public class ArgParserTests
     [Fact]
     public void Parse_WithNoArgs_ReturnsDefaultOverrides()
     {
-        var (overrides, err, initialConfig, configFile, showHelp, showVersion) = ArgParser.Parse([]);
+        var (overrides, err, init, configFile, showHelp, showVersion) = ArgParser.Parse([]);
 
         Assert.NotNull(overrides);
         Assert.Null(err);
-        Assert.False(initialConfig);
+        Assert.False(init);
         Assert.Null(configFile);
         Assert.False(showHelp);
         Assert.False(showVersion);
@@ -20,7 +20,7 @@ public class ArgParserTests
     [Fact]
     public void Parse_WithHelpFlag_ReturnsShowHelp()
     {
-        var (overrides, err, initialConfig, configFile, showHelp, showVersion) = ArgParser.Parse(["--help"]);
+        var (overrides, err, init, configFile, showHelp, showVersion) = ArgParser.Parse(["--help"]);
 
         Assert.Null(overrides);
         Assert.Null(err);
@@ -31,7 +31,7 @@ public class ArgParserTests
     [Fact]
     public void Parse_WithShortHelpFlag_ReturnsShowHelp()
     {
-        var (overrides, err, initialConfig, configFile, showHelp, showVersion) = ArgParser.Parse(["-h"]);
+        var (overrides, err, init, configFile, showHelp, showVersion) = ArgParser.Parse(["-h"]);
 
         Assert.Null(overrides);
         Assert.Null(err);
@@ -42,7 +42,7 @@ public class ArgParserTests
     [Fact]
     public void Parse_WithVersionFlag_ReturnsShowVersion()
     {
-        var (overrides, err, initialConfig, configFile, showHelp, showVersion) = ArgParser.Parse(["--version"]);
+        var (overrides, err, init, configFile, showHelp, showVersion) = ArgParser.Parse(["--version"]);
 
         Assert.Null(overrides);
         Assert.Null(err);
@@ -53,7 +53,7 @@ public class ArgParserTests
     [Fact]
     public void Parse_WithShortVersionFlag_ReturnsShowVersion()
     {
-        var (overrides, err, initialConfig, configFile, showHelp, showVersion) = ArgParser.Parse(["-v"]);
+        var (overrides, err, init, configFile, showHelp, showVersion) = ArgParser.Parse(["-v"]);
 
         Assert.Null(overrides);
         Assert.Null(err);
@@ -172,13 +172,13 @@ public class ArgParserTests
     }
 
     [Fact]
-    public void Parse_WithInitialConfig_SetsFlag()
+    public void Parse_WithInit_SetsFlag()
     {
-        var (overrides, err, initialConfig, _, _, _) = ArgParser.Parse(["--initial-config"]);
+        var (overrides, err, init, _, _, _) = ArgParser.Parse(["--init"]);
 
         Assert.NotNull(overrides);
         Assert.Null(err);
-        Assert.True(initialConfig);
+        Assert.True(init);
     }
 
     [Fact]
@@ -300,6 +300,7 @@ public class ArgParserTests
         Assert.Contains("--model", output);
         Assert.Contains("--generated-tasks-file", output);
         Assert.Contains("--refresh-issues-azdo", output);
+        Assert.Contains("--init", output);
         Assert.Contains("--azdo-organization", output);
         Assert.Contains("--azdo-project", output);
     }

@@ -49,7 +49,7 @@ Create the required files in your target repository:
 
 ```bash
 # Create initial configuration
-coralph --initial-config
+coralph --init
 
 # Fetch issues from your GitHub repository
 coralph --refresh-issues --repo owner/repo-name
@@ -226,7 +226,7 @@ Provide information about your tools and frameworks:
 ```bash
 # 1. Setup
 cd my-python-project
-coralph --initial-config
+coralph --init
 coralph --refresh-issues --repo myorg/my-python-project
 
 # 2. Customize prompt.md for Python
@@ -241,7 +241,7 @@ coralph --max-iterations 5
 ```bash
 # 1. Setup
 cd my-js-project
-coralph --initial-config
+coralph --init
 coralph --refresh-issues --repo myorg/my-js-project
 
 # 2. Customize prompt.md for Node.js
@@ -256,7 +256,7 @@ coralph --max-iterations 5
 ```bash
 # 1. Setup
 cd my-go-project
-coralph --initial-config
+coralph --init
 coralph --refresh-issues --repo myorg/my-go-project
 
 # 2. Customize prompt.md for Go

@@ -1028,3 +1028,14 @@ Model: GPT-5.1-Codex
   - Tables are more scannable than bullet lists for reference information
   - Advanced features belong in dedicated docs, not the main README
   - The "--help" flag is the proper place for CLI option enumeration, not README
+
+---
+## 2026-02-10 - #73
+
+- Added --init flag to replace init scripts and --initial-config, performing full repository initialization via the CLI
+- Added InitWorkflow to create issues.json, coralph.config.json, prompt.md template, and progress.txt with project detection/prompting
+- Removed legacy init scripts and updated docs to point to --init
+- Files changed: src/Coralph/ArgParser.cs, src/Coralph/Program.cs, src/Coralph/InitWorkflow.cs, src/Coralph/Coralph.csproj, src/Coralph.Tests/ArgParserTests.cs, README.md, docs/using-with-other-repos.md, .github/copilot-instructions.md, generated_tasks.json, coralph-init (removed), coralph-init.ps1 (removed)
+- **Learnings:**
+  - Keep init resources (templates/sample files) copied to output so published binaries can initialize without extra downloads
+  - Moving top-level init helpers into a dedicated class avoids top-level statement ordering issues
