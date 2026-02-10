@@ -7,7 +7,14 @@ internal static class InitWorkflow
     internal static async Task<int> RunAsync(string? configFile)
     {
         ConsoleOutput.WriteLine("Initializing repository for Coralph...");
-        var projectType = ResolveProjectType();
+        var repoRoot = ResolveRepoRoot();
+        if (repoRoot is null)
+        {
+            ConsoleOutput.WriteErrorLine("Current working directory is unavailable. Run --init from a valid repository path.");
+            return 1;
+        }
+
+        var projectType = ResolveProjectType(repoRoot);
         if (projectType is null)
         {
             ConsoleOutput.WriteErrorLine("Unable to determine project type. Create prompt.md manually or run from a repository root.");
@@ -16,7 +23,6 @@ internal static class InitWorkflow
 
         ConsoleOutput.WriteLine($"Selected project type: {projectType}");
 
-        var repoRoot = Directory.GetCurrentDirectory();
         var coralphRoot = AppContext.BaseDirectory;
 
         var exitCode = 0;
@@ -37,9 +43,36 @@ internal static class InitWorkflow
         return exitCode;
     }
 
-    private static ProjectType? ResolveProjectType()
+    private static string? ResolveRepoRoot()
     {
-        var detected = DetectProjectType();
+        try
+        {
+            var cwd = Directory.GetCurrentDirectory();
+            if (!string.IsNullOrWhiteSpace(cwd) && Directory.Exists(cwd))
+            {
+                return cwd;
+            }
+        }
+        catch (DirectoryNotFoundException)
+        {
+        }
+        catch (FileNotFoundException)
+        {
+        }
+
+        var pwd = Environment.GetEnvironmentVariable("PWD");
+        if (!string.IsNullOrWhiteSpace(pwd) && Directory.Exists(pwd))
+        {
+            ConsoleOutput.WriteWarningLine("Current working directory is unavailable; using PWD for init.");
+            return pwd;
+        }
+
+        return null;
+    }
+
+    private static ProjectType? ResolveProjectType(string repoRoot)
+    {
+        var detected = DetectProjectType(repoRoot);
         if (detected is not null)
         {
             return detected;
@@ -78,18 +111,29 @@ internal static class InitWorkflow
         };
     }
 
-    private static ProjectType? DetectProjectType()
+    private static ProjectType? DetectProjectType(string repoRoot)
     {
-        if (File.Exists("package.json"))
+        if (File.Exists(Path.Combine(repoRoot, "package.json")))
             return ProjectType.JavaScript;
-        if (File.Exists("pyproject.toml") || File.Exists("requirements.txt") || File.Exists("setup.py"))
+        if (File.Exists(Path.Combine(repoRoot, "pyproject.toml")) || File.Exists(Path.Combine(repoRoot, "requirements.txt")) || File.Exists(Path.Combine(repoRoot, "setup.py")))
             return ProjectType.Python;
-        if (File.Exists("go.mod"))
+        if (File.Exists(Path.Combine(repoRoot, "go.mod")))
             return ProjectType.Go;
-        if (File.Exists("Cargo.toml"))
+        if (File.Exists(Path.Combine(repoRoot, "Cargo.toml")))
             return ProjectType.Rust;
-        if (Directory.EnumerateFiles(".", "*.sln").Any() || Directory.EnumerateFiles(".", "*.csproj").Any())
-            return ProjectType.DotNet;
+        try
+        {
+            if (Directory.EnumerateFiles(repoRoot, "*.sln").Any() || Directory.EnumerateFiles(repoRoot, "*.csproj").Any())
+                return ProjectType.DotNet;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return null;
+        }
+        catch (FileNotFoundException)
+        {
+            return null;
+        }
 
         return null;
     }

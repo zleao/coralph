@@ -1039,3 +1039,13 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Keep init resources (templates/sample files) copied to output so published binaries can initialize without extra downloads
   - Moving top-level init helpers into a dedicated class avoids top-level statement ordering issues
+
+---
+## 2026-02-10 - #73
+
+- Ensured --init works without external scripts by shipping prompt templates in output and resolving repo root reliably
+- Updated init detection to use repo root paths and fallback to PWD when current directory is unavailable
+- Files changed: src/Coralph/InitWorkflow.cs, src/Coralph/Coralph.csproj, generated_tasks.json
+- **Learnings:**
+  - TargetPath is needed to keep template files in the expected examples/ directory for published binaries
+  - Using PWD as a fallback avoids cwd resolution failures during interactive runs

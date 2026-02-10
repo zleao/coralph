@@ -21,7 +21,7 @@
       "issueTitle": "Revise initialization flow: merge --init-config and scripts into a single --init flag in the executable",
       "title": "Ensure --init can operate without requiring users to download or run external scripts",
       "description": "Ensure --init can operate without requiring users to download or run external scripts",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 2
     },

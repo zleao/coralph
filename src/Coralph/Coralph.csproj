@@ -20,18 +20,23 @@
     </Content>
     <Content Include="..\..\prompt.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>prompt.md</TargetPath>
     </Content>
     <Content Include="..\..\examples\javascript-prompt.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>examples/javascript-prompt.md</TargetPath>
     </Content>
     <Content Include="..\..\examples\python-prompt.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>examples/python-prompt.md</TargetPath>
     </Content>
     <Content Include="..\..\examples\go-prompt.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>examples/go-prompt.md</TargetPath>
     </Content>
     <Content Include="..\..\examples\rust-prompt.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>examples/rust-prompt.md</TargetPath>
     </Content>
   </ItemGroup>
 
