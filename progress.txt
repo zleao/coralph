@@ -945,3 +945,17 @@ Model: GPT-5.1-Codex
   - Template selection based on detected/selected tech stack enables quick onboarding
   - Fallback to TypeScript template ensures unsupported stacks still get a reasonable starting point
   - Interactive prompts handle edge cases where auto-detection fails
+
+---
+## 2026-02-10 - #69 (continued)
+
+- Added guidance and links for extending tech stack support (task 69-004)
+- Enhanced coralph-init script to display instructions for adding new tech stacks
+- Created "Extending Tech Stack Support" section in README with step-by-step guide
+- Documented how to create templates, add detection logic, and contribute back
+- Files changed: coralph-init, README.md, generated_tasks.json
+- **Learnings:**
+  - Clear contribution pathways encourage community participation
+  - In-script guidance is visible when users need it most (right after setup)
+  - Documentation with examples lowers barriers to extending the tool
+  - Tasks 69-002 and 69-003 were already completed in initial implementation

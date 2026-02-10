@@ -201,6 +201,40 @@ dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --d
   Adapt Coralph for Python, JavaScript, Go, and other tech stacks
 - **[Changelog](CHANGELOG.md)** - Release history and notable changes
 
+## Extending Tech Stack Support
+
+Want to add support for a new programming language or framework? Here's how:
+
+1. **Create a new template**: Add a file like `examples/<stack>-prompt.md` following the pattern from existing templates
+   - Include repo context (tech stack, structure)
+   - Specify build and test commands
+   - Document project layout
+   - Add coding standards and conventions
+
+2. **Add detection logic**: Update `coralph-init` script's `detect_project_type()` function to recognize your stack's manifest files
+   - Examples: `pom.xml` for Maven/Java, `mix.exs` for Elixir, `Gemfile` for Ruby
+
+3. **Test the workflow**: Run `coralph-init` in a sample project of your new stack to verify the template works
+
+4. **Contribute back**: Consider submitting a PR to share your template with the community! See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+Example template structure:
+```markdown
+# <Stack> Project Prompt Template
+
+## Repo context
+- <Stack> project with <key dependencies>
+
+## Build and test
+- Build: <build command>
+- Test: <test command>
+- Lint: <lint command>
+
+## Workflow expectations
+- Follow <stack conventions>
+...
+```
+
 ## Features
 
 ### Azure DevOps and Azure Boards Integration

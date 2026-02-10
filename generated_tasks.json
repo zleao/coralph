@@ -21,7 +21,7 @@
       "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
       "title": "Detect if the new repository is a .NET project. If not, prompt the user to select the type of project, and suggest or generate an appropriat",
       "description": "Detect if the new repository is a .NET project. If not, prompt the user to select the type of project, and suggest or generate an appropriate prompt.md or a file from examples/prompts",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 2
     },
@@ -32,7 +32,7 @@
       "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
       "title": "If the tech stack is unsupported (no native prompt.md or example), default to a general TypeScript project prompt setup or template",
       "description": "If the tech stack is unsupported (no native prompt.md or example), default to a general TypeScript project prompt setup or template",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 3
     },
@@ -43,7 +43,7 @@
       "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
       "title": "Offer guidance or links for adding additional tech stack support in the future",
       "description": "Offer guidance or links for adding additional tech stack support in the future",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 4
     },
@@ -54,7 +54,7 @@
       "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
       "title": "Require manual setup instructions in the README",
       "description": "Require manual setup instructions in the README",
-      "status": "open",
+      "status": "skipped",
       "origin": "list",
       "order": 5
     },
@@ -65,7 +65,7 @@
       "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
       "title": "Ask users to copy example files without automation",
       "description": "Ask users to copy example files without automation",
-      "status": "open",
+      "status": "skipped",
       "origin": "list",
       "order": 6
     },
@@ -76,7 +76,7 @@
       "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
       "title": "Provide only .NET-specific guidance and leave others unsupported",
       "description": "Provide only .NET-specific guidance and leave others unsupported",
-      "status": "open",
+      "status": "skipped",
       "origin": "list",
       "order": 7
     },
@@ -87,7 +87,7 @@
       "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
       "title": "Proposed solution",
       "description": "Provide a script (e.g., coralph-init or similar) that automates the initial setup process in a new repository. This script should Install all relevant artifacts for the user\u0027s chosen tech stack automatically Detect if the new repository is a .NET project. If not, prompt the user to select the type of project, and sugge",
-      "status": "open",
+      "status": "done",
       "origin": "heading",
       "order": 8
     },
@@ -98,7 +98,7 @@
       "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
       "title": "Alternatives considered",
       "description": "Require manual setup instructions in the README Ask users to copy example files without automation Provide only .NET-specific guidance and leave others unsupported",
-      "status": "open",
+      "status": "skipped",
       "origin": "heading",
       "order": 9
     }
