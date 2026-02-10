@@ -54,7 +54,7 @@
       "issueTitle": "Revise initialization flow: merge --init-config and scripts into a single --init flag in the executable",
       "title": "Errors and configuration problems encountered during initialization should be written to console output for clarity and troubleshooting",
       "description": "Errors and configuration problems encountered during initialization should be written to console output for clarity and troubleshooting",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 5
     },

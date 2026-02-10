@@ -1065,3 +1065,11 @@ Model: GPT-5.1-Codex
 - Files changed: generated_tasks.json
 - **Learnings:**
   - Keep progress entries explicit even when changes are administrative
+
+---
+## 2026-02-10 - #73
+
+- Added explicit init error reporting for file write failures and summary failure messaging
+- Files changed: src/Coralph/InitWorkflow.cs, generated_tasks.json
+- **Learnings:**
+  - Catching IO/permission errors during init provides clearer troubleshooting output

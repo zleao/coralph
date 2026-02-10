@@ -39,6 +39,10 @@ internal static class InitWorkflow
             ConsoleOutput.WriteLine("  2. Add your issues to issues.json (or use --refresh-issues)");
             ConsoleOutput.WriteLine("  3. Run: coralph --max-iterations 5");
         }
+        else
+        {
+            ConsoleOutput.WriteErrorLine("Initialization failed. Review the errors above.");
+        }
 
         return exitCode;
     }
@@ -154,10 +158,23 @@ internal static class InitWorkflow
             return 1;
         }
 
-        File.Copy(sourcePath, targetPath);
-        ConsoleOutput.WriteLine("Created issues.json");
-        await Task.CompletedTask;
-        return 0;
+        try
+        {
+            File.Copy(sourcePath, targetPath);
+            ConsoleOutput.WriteLine("Created issues.json");
+            await Task.CompletedTask;
+            return 0;
+        }
+        catch (IOException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to write issues.json: {ex.Message}");
+            return 1;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to write issues.json: {ex.Message}");
+            return 1;
+        }
     }
 
     private static async Task<int> EnsureConfigFileAsync(string repoRoot, string? configFile)
@@ -177,9 +194,22 @@ internal static class InitWorkflow
             [LoopOptions.ConfigurationSectionName] = new LoopOptions()
         };
         var json = JsonSerializer.Serialize(defaultPayload, new JsonSerializerOptions { WriteIndented = true });
-        await File.WriteAllTextAsync(path, json, CancellationToken.None);
-        ConsoleOutput.WriteLine($"Created config file: {path}");
-        return 0;
+        try
+        {
+            await File.WriteAllTextAsync(path, json, CancellationToken.None);
+            ConsoleOutput.WriteLine($"Created config file: {path}");
+            return 0;
+        }
+        catch (IOException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to write config file: {ex.Message}");
+            return 1;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to write config file: {ex.Message}");
+            return 1;
+        }
     }
 
     private static async Task<int> EnsurePromptFileAsync(string repoRoot, string coralphRoot, ProjectType projectType)
@@ -207,10 +237,23 @@ internal static class InitWorkflow
             return 1;
         }
 
-        File.Copy(sourcePath, targetPath);
-        ConsoleOutput.WriteLine($"Created prompt.md ({projectType} template)");
-        await Task.CompletedTask;
-        return 0;
+        try
+        {
+            File.Copy(sourcePath, targetPath);
+            ConsoleOutput.WriteLine($"Created prompt.md ({projectType} template)");
+            await Task.CompletedTask;
+            return 0;
+        }
+        catch (IOException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to write prompt.md: {ex.Message}");
+            return 1;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to write prompt.md: {ex.Message}");
+            return 1;
+        }
     }
 
     private static async Task<int> EnsureProgressFileAsync(string repoRoot)
@@ -222,9 +265,22 @@ internal static class InitWorkflow
             return 0;
         }
 
-        await File.WriteAllTextAsync(targetPath, string.Empty, CancellationToken.None);
-        ConsoleOutput.WriteLine("Created progress.txt");
-        return 0;
+        try
+        {
+            await File.WriteAllTextAsync(targetPath, string.Empty, CancellationToken.None);
+            ConsoleOutput.WriteLine("Created progress.txt");
+            return 0;
+        }
+        catch (IOException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to write progress.txt: {ex.Message}");
+            return 1;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to write progress.txt: {ex.Message}");
+            return 1;
+        }
     }
 
     private enum ProjectType
