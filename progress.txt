@@ -994,3 +994,19 @@ Model: GPT-5.1-Codex
   - Bash provides better portability and reliability for initialization tasks across target platforms
   - Clear documentation of alternatives (manual setup) addresses Windows users who prefer not to use WSL
   - Sometimes the right decision is NOT to migrate - evaluate existing solutions before rebuilding
+
+---
+## 2026-02-10 - #71 (task 71-001)
+
+- Created PowerShell Core init script (coralph-init.ps1) as primary cross-platform initialization tool
+- PowerShell version matches bash functionality: auto-detects project type, prompts if needed, installs core artifacts
+- Updated README.md Quick Start to document both PowerShell (recommended) and bash options
+- Enhanced manual setup documentation with step-by-step instructions for all platforms
+- Keeps bash version (coralph-init) as alternative for Unix-like systems
+- Files changed: coralph-init.ps1 (new), README.md, generated_tasks.json
+- **Learnings:**
+  - PowerShell 7+ provides consistent cross-platform behavior matching justfile pattern
+  - $PSCommandPath gives reliable script root path for file operations
+  - Copy-Item with progress output shows file copy status
+  - Read-Host for interactive prompts works consistently across platforms
+  - Providing both PowerShell and bash scripts maximizes compatibility without forcing users to install PowerShell
