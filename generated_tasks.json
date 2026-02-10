@@ -21,7 +21,7 @@
       "issueTitle": "feat: coralph-init should use PowerShell Core for cross-platform compatibility",
       "title": "Alternatives considered",
       "description": "Continue to provide a bash version for environments where PowerShell Core is not available, but prioritize PowerShell Core as default. Investigate using another cross-platform shell or scripting format, but PowerShell Core should be favored given its current adoption in the repo",
-      "status": "open",
+      "status": "done",
       "origin": "heading",
       "order": 2
     }
